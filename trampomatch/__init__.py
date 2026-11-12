@@ -25,6 +25,8 @@ def create_app(config_name="development"):
 
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
+    if config_name == "production" and not os.environ.get("SECRET_KEY"):
+        raise RuntimeError("Defina SECRET_KEY para rodar em produção.")
 
     app.config["GOOGLE_CLIENT_ID"] = _read_env_value("GOOGLE_CLIENT_ID")
     app.config["GOOGLE_CLIENT_SECRET"] = _read_env_value("GOOGLE_CLIENT_SECRET")

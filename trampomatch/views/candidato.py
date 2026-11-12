@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from flask import (
     Blueprint,
@@ -67,7 +67,7 @@ def quer_json():
 @login_required
 def dispensar_novidades():
     exigir_candidato()
-    current_user.ultimo_acesso_dashboard = datetime.now()
+    current_user.ultimo_acesso_dashboard = datetime.now(UTC).replace(tzinfo=None)
     db.session.commit()
     return "", 204
 

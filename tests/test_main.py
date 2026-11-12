@@ -42,3 +42,13 @@ def test_contratante_logado_nao_acessa_landing(client):
 
     assert response.status_code == 302
     assert "/contratante/dashboard" in response.headers["Location"]
+
+
+def test_producao_exige_secret_key(monkeypatch):
+    import pytest
+
+    from trampomatch import create_app
+
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        create_app("production")

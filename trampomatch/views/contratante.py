@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from flask import (
     Blueprint,
@@ -77,7 +77,8 @@ def dashboard():
     def _rel(dt):
         if not dt:
             return ""
-        delta = datetime.now() - dt
+        delta = datetime.now(UTC).replace(tzinfo=None) - dt
+        dt = dt.replace(tzinfo=UTC).astimezone()  # exibe no fuso local
         if delta.days == 0:
             return f"Hoje, {dt.strftime('%H:%M')}"
         if delta.days == 1:
@@ -175,7 +176,7 @@ def dashboard():
         vagas_recentes=vagas[:3],
         candidatos_por_vaga=candidatos_por_vaga,
         atividades=atividades,
-        agora=datetime.now(),
+        agora=datetime.now(UTC).replace(tzinfo=None),
     )
 
 
@@ -894,7 +895,7 @@ def mensagem_match(match_id):
         match.mensagem_contratante = form.mensagem.data.strip()
         match.contato_email = form.contato_email.data or None
         match.contato_telefone = form.contato_telefone.data or None
-        match.mensagem_enviada_em = datetime.now()
+        match.mensagem_enviada_em = datetime.now(UTC).replace(tzinfo=None)
         db.session.commit()
         flash("Mensagem do match salva com sucesso.", "success")
         return redirect(url_for("contratante.matches"))

@@ -803,3 +803,15 @@ def test_handlers_403_e_404(client):
     login(client, "erro403@test.com")
     response_403 = client.get("/contratante/dashboard")
     assert response_403.status_code == 403
+
+
+def test_dashboard_contratante_nao_mostra_idade_negativa_de_vaga(client):
+    # Regressão: SQLite grava func.now() em UTC; comparar com hora local gerava "Há -1 dias".
+    contratante = criar_contratante()
+    criar_vaga(contratante)
+    login(client, "contratante@test.com")
+
+    html = client.get("/contratante/dashboard").get_data(as_text=True)
+
+    assert "Há -" not in html
+    assert "Hoje" in html
