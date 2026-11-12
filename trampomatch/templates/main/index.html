@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block title %}TrampoMatch — Encontre seu match perfeito{% endblock %}
+
+{% block body_class %}tm-landing-body{% endblock %}
+
+{% block footer %}{% include 'main/partials/footer_landing.html' %}{% endblock %}
+
+{% block content %}
+<div class="tm-landing-page">
+
+<section class="tm-hero">
+  <div class="tm-hero-left tm-reveal tm-reveal--left">
+    <div class="tm-hero-content">
+      <span class="tm-eyebrow">Para vagas e para candidatos</span>
+
+      <h1 class="tm-hero-title">
+        Encontre seu <span class="tm-accent">match perfeito.</span>
+      </h1>
+
+      <p class="tm-hero-subtitle">
+        Vagas compatíveis com seu perfil. Sem grupo no Zap, sem spam.
+      </p>
+
+      <div class="tm-hero-buttons">
+        <a href="{{ url_for('auth.cadastro') }}" class="button tm-btn-primary tm-btn-lg">Quero encontrar vagas</a>
+        <a href="#como-funciona" class="button tm-btn-outline tm-btn-lg">Ver como funciona</a>
+      </div>
+
+      <div class="tm-hero-metrics">
+        {% for metrica in metricas %}
+        <div class="tm-metric">
+          <span class="tm-metric-numero">{{ metrica.numero }}</span>
+          <span>{{ metrica.rotulo }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="tm-hero-right tm-reveal tm-reveal--right tm-d1">
+    <figure class="tm-hero-image-card">
+      <video
+        class="tm-hero-motion"
+        autoplay
+        muted
+        loop
+        playsinline
+        poster="{{ url_for('static', filename='img/hero-dashboard.png') }}"
+        aria-label="Animação de swipe de vagas compatíveis"
+      >
+        <source src="{{ url_for('static', filename='img/hero-swipe-animation.webm') }}" type="video/webm">
+        <img
+          src="{{ url_for('static', filename='img/hero-dashboard.png') }}"
+          alt="Candidato acessando oportunidades pelo celular"
+        >
+      </video>
+    </figure>
+  </div>
+</section>
+
+<section id="demo" class="section tm-section-demo">
+  <div class="container">
+    <div class="tm-section-header tm-section-header-stacked tm-reveal">
+      <span class="tm-eyebrow">Dois lados, um match</span>
+      <h2 class="tm-section-title">Veja como funciona na prática</h2>
+      <p class="tm-section-subtitle">Funcionalidades principais para candidatos e contratantes.</p>
+    </div>
+
+    <div class="tm-demo-grid">
+
+      <div class="tm-demo-panel tm-reveal tm-reveal--left">
+        <p class="tm-demo-panel-label">Você é candidato</p>
+        <div class="tm-demo-card">
+          <div class="tm-demo-card-top">
+            <span class="tm-demo-match-badge">
+              {{ demo_candidato.vaga.compatibilidade }}% match
+            </span>
+            <span class="tm-demo-status">
+              <span class="tm-demo-status-dot"></span>Vaga ativa
+            </span>
+          </div>
+          <div class="tm-demo-card-body">
+            <p class="tm-demo-vaga-titulo">{{ demo_candidato.vaga.titulo }}</p>
+            <p class="tm-demo-vaga-meta">
+              {{ demo_candidato.vaga.empresa }} · {{ demo_candidato.vaga.regiao }}
+            </p>
+            <p class="tm-demo-vaga-meta">
+              {{ demo_candidato.vaga.tipo_vaga }} · {{ demo_candidato.vaga.valor }}
+            </p>
+            <div class="tm-demo-chips">
+              {% for h in demo_candidato.vaga.habilidades %}
+              <span class="tm-demo-chip">{{ h }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="tm-demo-actions">
+            <span class="tm-demo-btn-no" aria-label="Não tenho interesse">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </span>
+            <span class="tm-demo-btn-yes" aria-label="Tenho interesse">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+        <p class="tm-demo-caption">Deslize para curtir ou ignorar a vaga</p>
+      </div>
+
+      <div class="tm-demo-panel tm-reveal tm-reveal--right tm-d2">
+        <p class="tm-demo-panel-label">Você é contratante</p>
+        <div class="tm-demo-candidates">
+          <p class="tm-demo-vaga-header">
+            {{ demo_contratante.vaga }} · {{ demo_contratante.regiao }}
+          </p>
+          <p class="tm-demo-candidates-count">
+            {{ demo_contratante.candidatos|length }} candidatos interessados
+          </p>
+          {% for c in demo_contratante.candidatos %}
+          <div class="tm-demo-candidate-row">
+            <div class="tm-demo-candidate-avatar">{{ c.nome[0] }}</div>
+            <div class="tm-demo-candidate-info">
+              <span class="tm-demo-candidate-name">{{ c.nome }}</span>
+              <span class="tm-demo-candidate-detail">
+                {{ c.regiao }} · {{ c.nivel }}
+              </span>
+            </div>
+            <span class="tm-demo-candidate-match">{{ c.compatibilidade }}%</span>
+          </div>
+          {% endfor %}
+        </div>
+        <p class="tm-demo-caption">Candidatos ordenados por compatibilidade</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="como-funciona" class="section tm-como-funciona">
+  <div class="container">
+    <header class="tm-como-funciona-header tm-reveal">
+      <span class="tm-eyebrow">É simples assim</span>
+      <h2 class="tm-section-title">Como funciona</h2>
+    </header>
+
+    <ol class="tm-passos-grid">
+      <li class="tm-passo-wrap">
+        <article class="tm-passo tm-reveal tm-d1">
+          <span class="tm-passo-badge" aria-hidden="true">1</span>
+          <div class="tm-passo-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <h3>Crie seu perfil</h3>
+          <p>Região, turno, habilidades.</p>
+        </article>
+      </li>
+
+      <li class="tm-passo-wrap">
+        <article class="tm-passo tm-reveal tm-d2">
+          <span class="tm-passo-badge" aria-hidden="true">2</span>
+          <div class="tm-passo-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </div>
+          <h3>Deslize e encontre seu match</h3>
+          <p>Curta ou ignore — sem compromisso.</p>
+        </article>
+      </li>
+
+      <li class="tm-passo-wrap">
+        <article class="tm-passo tm-reveal tm-d3">
+          <span class="tm-passo-badge" aria-hidden="true">3</span>
+          <div class="tm-passo-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3>Conecte e contrate</h3>
+          <p>Os mais compatíveis chegam primeiro.</p>
+        </article>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="compatibilidade" class="section tm-compat-section">
+  <div class="container">
+    <div class="tm-compat-shell">
+      <div class="tm-compat-top">
+        <div class="tm-reveal tm-reveal--left">
+          <span class="tm-eyebrow">Como o match funciona</span>
+          <h2 class="tm-compat-title">
+            A vaga certa aparece <span>primeiro</span><br>
+            para você
+          </h2>
+          <p class="tm-compat-subtitle">
+            Seis critérios combinados geram o % de match — quanto maior, mais no topo.
+          </p>
+        </div>
+
+        <div class="tm-compat-score-card tm-reveal tm-reveal--right tm-d2">
+          <div class="tm-compat-score-head">
+            <span>Sua compatibilidade média</span>
+            <span class="tm-compat-score-num">87%</span>
+          </div>
+          <div class="tm-score-bar" aria-hidden="true">
+            <span style="width: 87%"></span>
+          </div>
+          <div class="tm-compat-tags">
+            <span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              Vitória, ES
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="7" width="18" height="13" rx="2"/>
+                <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <path d="M3 12h18"/>
+              </svg>
+              Diária
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m12 2 3 6 6 .9-4.5 4.4 1.1 6.2L12 16.6 6.4 19.5l1.1-6.2L3 8.9 9 8z"/>
+              </svg>
+              Compatível
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 14a8 8 0 0 1 16 0"/>
+                <path d="M12 14l3-4"/>
+                <path d="M8 18h8"/>
+              </svg>
+              Moderada
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tm-compat-grid">
+        {% for criterio in criterios_compatibilidade %}
+        <div class="tm-compat-card tm-reveal tm-d{{ (loop.index0 % 5) + 1 }}">
+          <span class="tm-compat-number">{{ "%02d"|format(loop.index) }}</span>
+          <div class="tm-compat-card-body">
+            <span class="tm-compat-icon">
+              {% if loop.index == 1 %}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              {% elif loop.index == 2 %}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="7" width="18" height="13" rx="2"/>
+                <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <path d="M3 12h18"/>
+              </svg>
+              {% elif loop.index == 3 %}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 7v5l3 2"/>
+              </svg>
+              {% elif loop.index == 4 %}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="7" r="4"/>
+                <path d="M5 21v-2a7 7 0 0 1 14 0v2"/>
+              </svg>
+              {% elif loop.index == 5 %}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 19h16"/>
+                <path d="M7 16l4-4 3 3 5-7"/>
+                <path d="M15 8h4v4"/>
+              </svg>
+              {% else %}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16"/>
+                <path d="M4 17h16"/>
+                <circle cx="8" cy="7" r="2"/>
+                <circle cx="16" cy="17" r="2"/>
+              </svg>
+              {% endif %}
+            </span>
+            <div>
+              <h3>{{ criterio.titulo }}</h3>
+              <p>{{ criterio.descricao }}</p>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>{# /tm-landing-page #}
+{% endblock %}

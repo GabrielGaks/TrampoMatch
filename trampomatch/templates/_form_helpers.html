@@ -1,0 +1,25 @@
+{% macro render_field(field) %}
+  <div class="field">
+    {{ field.label(class="label") }}
+    <div class="control">
+      {% if field.type == "TextAreaField" %}
+        {{ field(class="textarea") }}
+      {% elif field.type == "SelectField" %}
+        <div class="select is-fullwidth tm-native-select-wrap">
+          {{ field(class="tm-custom-select-native") }}
+        </div>
+      {% elif field.type == "RadioField" %}
+        <div class="tm-radio-group">
+          {% for option in field %}
+            <label class="radio">{{ option() }} {{ option.label.text }}</label>
+          {% endfor %}
+        </div>
+      {% else %}
+        {{ field(class="input") }}
+      {% endif %}
+    </div>
+    {% for error in field.errors %}
+      <p class="help is-danger">{{ error }}</p>
+    {% endfor %}
+  </div>
+{% endmacro %}

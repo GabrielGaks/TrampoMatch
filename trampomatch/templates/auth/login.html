@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Entrar — TrampoMatch{% endblock %}
+{% block body_class %}tm-signup-body tm-login-body{% endblock %}
+
+{% block content %}
+<section class="tm-signup-section tm-login-section">
+  <div class="container tm-signup-container tm-login-container">
+    <aside class="tm-signup-intro tm-login-intro tm-reveal tm-reveal--left" aria-label="benefícios do acesso">
+      <span class="tm-signup-pill">
+        Bem-vindo de volta!
+        <span aria-hidden="true">👋</span>
+      </span>
+
+      <h1>Faça login e conecte-se às <span>melhores oportunidades.</span></h1>
+      <p class="tm-signup-copy">
+        O TrampoMatch conecta candidatos e contratantes de forma inteligente, rápida e eficiente.
+      </p>
+
+      <div class="tm-signup-benefits">
+        <div class="tm-signup-benefit">
+          <span class="tm-signup-benefit-icon is-purple">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="m16 16 4 4"/>
+            </svg>
+          </span>
+          <div>
+            <strong>Vagas compatíveis com seu perfil</strong>
+            <p>Encontramos oportunidades que combinam com você.</p>
+          </div>
+        </div>
+        <div class="tm-signup-benefit">
+          <span class="tm-signup-benefit-icon is-green">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 0 0-8 0v2"/>
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M20 8v5"/>
+              <path d="M22 10.5h-4"/>
+            </svg>
+          </span>
+          <div>
+            <strong>Processos simples e transparentes</strong>
+            <p>Acompanhe cada etapa de forma clara e fácil.</p>
+          </div>
+        </div>
+        <div class="tm-signup-benefit">
+          <span class="tm-signup-benefit-icon is-blue">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </span>
+          <div>
+            <strong>Seus dados protegidos</strong>
+            <p>Segurança e privacidade em primeiro lugar.</p>
+          </div>
+        </div>
+      </div>
+
+      <figure class="tm-signup-illustration tm-login-illustration">
+        <img
+          src="{{ url_for('static', filename='img/hero-dashboard.png') }}"
+          alt="Painel do TrampoMatch com indicadores de vagas e compatibilidade"
+        >
+      </figure>
+    </aside>
+
+    <div class="tm-signup-card-wrap tm-login-card-wrap tm-reveal tm-reveal--right tm-d2">
+      <form method="post" class="tm-signup-card tm-login-card">
+        {{ form.hidden_tag() }}
+
+        <header class="tm-signup-form-header tm-login-form-header">
+          <span class="tm-signup-form-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="2"/>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            </svg>
+          </span>
+          <div>
+            <h2>Entrar na sua conta</h2>
+            <p>Informe seus dados para acessar sua área.</p>
+          </div>
+        </header>
+
+        <div class="field">
+          {{ form.email.label(class="label") }}
+          <div class="control has-icons-left">
+            {{ form.email(class="input tm-signup-input", placeholder="seu@email.com", autocomplete="email") }}
+            <span class="icon is-left">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="m4 7 8 6 8-6"/></svg>
+            </span>
+          </div>
+          {% for error in form.email.errors %}
+            <p class="help is-danger">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="field">
+          {{ form.senha.label(class="label") }}
+          <div class="control has-icons-left has-icons-right">
+            {{ form.senha(class="input tm-signup-input", placeholder="Digite sua senha", autocomplete="current-password") }}
+            <span class="icon is-left">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            </span>
+            <button
+              class="icon is-right tm-password-toggle"
+              type="button"
+              aria-label="Mostrar senha"
+              aria-pressed="false"
+              data-password-toggle
+              data-target="{{ form.senha.id }}"
+            >
+              <span class="tm-eye-icon tm-eye-open">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/></svg>
+              </span>
+              <span class="tm-eye-icon tm-eye-closed">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 10.6A3 3 0 0 0 14 14"/><path d="M7.4 7.4C4.1 8.8 2 12 2 12s3.5 6 10 6c1.7 0 3.2-.4 4.4-1"/><path d="M12 6c6.5 0 10 6 10 6a16.2 16.2 0 0 1-2.3 2.9"/></svg>
+              </span>
+            </button>
+          </div>
+          {% for error in form.senha.errors %}
+            <p class="help is-danger">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="tm-login-options">
+          <label class="checkbox">
+            <input type="checkbox" name="lembrar" value="1" checked>
+            Lembrar de mim
+          </label>
+          <a href="{{ url_for('auth.login') }}">Esqueci minha senha</a>
+        </div>
+
+        {{ form.submit(class="button tm-btn-primary is-fullwidth tm-signup-submit tm-login-submit") }}
+
+        <div class="tm-signup-divider"><span>ou</span></div>
+
+        <a href="{{ url_for('auth.google_login') }}" class="button is-fullwidth tm-google-button">
+          <span aria-hidden="true">G</span>
+          Entrar com Google
+        </a>
+
+        <p class="tm-signup-login-link">
+          Ainda não tem uma conta?
+          <a href="{{ url_for('auth.cadastro') }}">Cadastre-se</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const passwordToggles = document.querySelectorAll('[data-password-toggle]');
+    passwordToggles.forEach((toggle) => {
+      toggle.addEventListener('click', () => {
+        const input = document.getElementById(toggle.dataset.target);
+        if (!input) return;
+
+        const shouldShow = input.type === 'password';
+        input.type = shouldShow ? 'text' : 'password';
+        toggle.setAttribute('aria-pressed', String(shouldShow));
+        toggle.setAttribute('aria-label', shouldShow ? 'Ocultar senha' : 'Mostrar senha');
+        toggle.classList.toggle('is-active', shouldShow);
+        toggle.classList.remove('is-animating');
+        void toggle.offsetWidth;
+        toggle.classList.add('is-animating');
+        window.setTimeout(() => toggle.classList.remove('is-animating'), 260);
+      });
+    });
+  });
+</script>
+{% endblock %}

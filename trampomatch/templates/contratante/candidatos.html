@@ -1,0 +1,648 @@
+{% extends 'base.html' %}
+{% from '_form_helpers.html' import render_field %}
+
+{% block title %}Candidatos — TrampoMatch{% endblock %}
+{% block body_class %}tm-discovery-body{% endblock %}
+
+{% macro lock_icon() -%}
+<svg viewBox="0 0 24 24" aria-hidden="true">
+  <rect x="3" y="11" width="18" height="10" rx="2"/>
+  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+</svg>
+{%- endmacro %}
+
+{% block content %}
+<section class="section tm-app-section tm-discovery-page">
+  <div class="tm-discovery-layout">
+
+    <aside class="tm-discovery-filters tm-reveal tm-reveal--left" data-filter-panel>
+      <div class="tm-discovery-panel-head">
+        <div class="tm-discovery-panel-title">
+          <span class="tm-discovery-mini-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M7 12h10"/><path d="M10 17h4"/></svg>
+          </span>
+          <strong>Filtros</strong>
+        </div>
+        <button class="button tm-filter-toggle" type="button" data-filter-toggle aria-label="Alternar filtros">«</button>
+      </div>
+
+      <form method="get" class="tm-discovery-filter-form">
+        <input type="hidden" name="ordenar" value="{{ ordenar }}">
+
+        {% if vagas_abertas %}
+        <div class="field">
+          <label class="label" for="vaga_id">Para qual vaga?</label>
+          <div class="select is-fullwidth tm-native-select-wrap">
+            <select id="vaga_id" name="vaga_id" class="tm-custom-select-native">
+              <option value="">— Selecione uma vaga —</option>
+              {% for v in vagas_abertas %}
+              <option value="{{ v.id }}" {% if vaga_selecionada and vaga_selecionada.id == v.id %}selected{% endif %}>{{ v.titulo }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% if categorias_filtro_ativas %}
+          <p class="help tm-discovery-category-filter">
+            {% if vaga_selecionada and categorias_filtro_labels %}
+            Mostrando candidatos da categoria: <strong>{{ categorias_filtro_labels[0] }}</strong>
+            {% else %}
+            Mostrando candidatos das categorias das suas vagas abertas.
+            {% endif %}
+          </p>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="field">
+          <label class="label" for="regiao">Região</label>
+          <div class="tm-location-row">
+            <div class="control tm-location-input">
+              <input class="input" type="text" id="regiao" name="regiao"
+                value="{{ request.args.get('regiao', '') }}" autocomplete="off"
+                placeholder="Digite ou detecte a região">
+            </div>
+            <button class="button tm-btn-outline tm-loc-btn-sm" id="filtro-usar-localizacao" type="button" title="Usar minha localização">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="tm-autocomplete-list" id="filtro-regiao-sugestoes"></div>
+        </div>
+
+        {{ render_field(form.tipo_trabalho) }}
+
+        <button class="button tm-btn-primary is-fullwidth" type="submit">
+          <span class="icon is-small" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          </span>
+          <span>Aplicar filtros</span>
+        </button>
+        <a href="{{ url_for('contratante.candidatos', regiao='') }}" class="button tm-discovery-clear is-fullwidth">
+          <span class="icon is-small" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </span>
+          <span>Limpar filtros</span>
+        </a>
+      </form>
+
+      <div class="tm-discovery-tip">
+        <span class="tm-discovery-tip-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+        </span>
+        <div>
+          <strong>Dica</strong>
+          <p>Selecione uma vaga para avaliar candidatos e registrar o interesse de forma direcionada.</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="tm-discovery-main tm-reveal tm-d2">
+      <button class="button tm-mobile-filter-button" type="button" data-filter-toggle>
+        <span class="icon is-small" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M7 12h10"/><path d="M10 17h4"/></svg>
+        </span>
+        <span>Filtros</span>
+      </button>
+
+      <div class="tm-discovery-main-head">
+        <div>
+          <h1 class="tm-section-title">Descobrir candidatos</h1>
+          <p class="tm-section-subtitle">Encontre profissionais que combinam com as suas vagas.</p>
+          {% if vaga_selecionada %}
+          <p class="tm-section-subtitle">
+            Avaliando para: <strong style="color:var(--primary)">{{ vaga_selecionada.titulo }}</strong> &mdash; deslize para curtir ou descartar.
+          </p>
+          {% elif vagas_abertas %}
+          <p class="tm-section-subtitle" style="color:#D97706">
+            Selecione uma vaga no painel de filtros para ativar o curtir.
+          </p>
+          {% else %}
+          <p class="tm-section-subtitle" style="color:#D97706">
+            Você não tem vagas abertas. <a href="{{ url_for('contratante.nova_vaga') }}">Cadastre uma vaga</a> para avaliar candidatos.
+          </p>
+          {% endif %}
+          <span class="tm-discovery-count">{{ candidatos|length }} {{ 'candidato encontrado' if candidatos|length == 1 else 'candidatos encontrados' }}</span>
+        </div>
+
+        <form method="get" class="tm-discovery-order">
+          <input type="hidden" name="regiao" value="{{ request.args.get('regiao', '') }}">
+          <input type="hidden" name="tipo_trabalho" value="{{ request.args.get('tipo_trabalho', '') }}">
+          {% if vaga_selecionada %}<input type="hidden" name="vaga_id" value="{{ vaga_selecionada.id }}">{% endif %}
+          <label class="label" for="ordenar">Ordenar por</label>
+          <div class="select is-fullwidth tm-native-select-wrap">
+            <select id="ordenar" name="ordenar" class="tm-custom-select-native" onchange="this.form.submit()">
+              <option value="compatibilidade" {% if ordenar == 'compatibilidade' %}selected{% endif %}>Mais compatíveis</option>
+              <option value="recentes" {% if ordenar == 'recentes' %}selected{% endif %}>Mais recentes</option>
+            </select>
+          </div>
+        </form>
+      </div>
+
+      <div class="tm-swipe-shell tm-discovery-deck {% if not vaga_selecionada %}is-locked{% endif %}">
+        <div class="tm-swipe-feedback" data-swipe-feedback aria-hidden="true">
+          <span data-swipe-feedback-text></span>
+        </div>
+
+        {% if not vaga_selecionada %}
+        <div class="tm-discovery-lock-overlay" aria-live="polite">
+          <span class="tm-discovery-lock-icon">{{ lock_icon() }}</span>
+          <strong>Seleção bloqueada</strong>
+          <p>
+            {% if vagas_abertas %}
+              Selecione uma vaga no painel de filtros para avaliar candidatos.
+            {% else %}
+              Cadastre uma vaga aberta para iniciar a avaliação de candidatos.
+            {% endif %}
+          </p>
+        </div>
+        {% endif %}
+
+        {% for item in candidatos %}
+          {% set perfil = item.perfil %}
+          {% set usuario = item.usuario %}
+          {% set skills = perfil.habilidades_lista() %}
+          <article
+            class="tm-swipe-card tm-discovery-card {% if loop.first %}is-active{% endif %}"
+            data-swipe-card
+            data-title="{{ usuario.nome|e }}"
+            data-region="{{ perfil.regiao|e }}"
+            data-tipo="{{ perfil.tipo_trabalho|e }}"
+            data-disponibilidade="{{ perfil.disponibilidade|e }}"
+            data-nivel="{{ perfil.nivel_experiencia_rotulo|e }}"
+            data-skills="{{ skills|tojson|forceescape }}"
+            data-match="{{ item.compatibilidade if item.compatibilidade is not none else '' }}"
+            data-match-result="{{ (item.resultado_match or {})|tojson|forceescape }}"
+            data-experiencia="{{ perfil.experiencia_resumida or '' }}"
+            data-curriculo-url="{{ url_for('contratante.baixar_curriculo_candidato', id=usuario.id) if perfil.curriculo_arquivo else '' }}"
+            data-curriculo-view-url="{{ url_for('contratante.visualizar_curriculo_candidato', id=usuario.id) if perfil.curriculo_arquivo else '' }}"
+            data-curriculo-nome="{{ perfil.curriculo_nome_original or '' }}"
+          >
+            <div class="tm-swipe-stamp tm-swipe-stamp-like">Tenho interesse</div>
+            <div class="tm-swipe-stamp tm-swipe-stamp-skip">Não tenho interesse</div>
+
+            <div class="tm-swipe-card-inner">
+              <div class="tm-swipe-card-top">
+                {% if item.compatibilidade is not none %}
+                  <span class="tm-swipe-match-badge">{{ item.compatibilidade }}% Match</span>
+                {% else %}
+                  <span></span>
+                {% endif %}
+                <span class="tm-swipe-status-badge">
+                  <span class="tm-swipe-status-dot"></span>
+                  {{ perfil.nivel_experiencia_rotulo }}
+                </span>
+              </div>
+
+              <div class="tm-swipe-card-hero">
+                <div class="tm-swipe-card-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div class="tm-swipe-card-hero-text">
+                  <h2 class="tm-swipe-title">{{ usuario.nome }}</h2>
+                  <div class="tm-swipe-meta">
+                    <span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                      {{ perfil.regiao }}
+                    </span>
+                    <span class="tm-swipe-meta-sep">•</span>
+                    <span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                      {{ perfil.tipo_trabalho|capitalize }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {% if perfil.experiencia_resumida %}
+                <p class="tm-card-desc tm-swipe-desc">{{ perfil.experiencia_resumida }}</p>
+              {% endif %}
+
+              <div class="tm-swipe-info-grid">
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--orange" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Experiência</span>
+                  <strong class="tm-swipe-info-value">{{ perfil.nivel_experiencia_rotulo }}</strong>
+                </div>
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--green" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Disponibilidade</span>
+                  <strong class="tm-swipe-info-value">{{ perfil.disponibilidade|capitalize }}</strong>
+                </div>
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--purple" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Tipo de trabalho</span>
+                  <strong class="tm-swipe-info-value">{{ perfil.tipo_trabalho|capitalize }}</strong>
+                </div>
+              </div>
+
+              {% if skills %}
+                <div class="tm-swipe-skills">
+                  <span class="tm-swipe-skills-label">Habilidades</span>
+                  <div class="tm-swipe-chips">
+                    {% for skill in skills[:4] %}
+                      <span class="tm-swipe-chip">{{ skill|capitalize }}</span>
+                    {% endfor %}
+                    {% if skills|length > 4 %}
+                      <span class="tm-swipe-chip tm-swipe-chip--more">+{{ skills|length - 4 }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+
+              <div class="tm-swipe-actions">
+                <form method="post" action="{{ url_for('contratante.descartar_candidato', id=usuario.id) }}" data-swipe-action="skip">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="button tm-swipe-btn tm-swipe-btn-skip" type="submit" aria-label="Não tenho interesse">×</button>
+                </form>
+
+                <button class="button tm-swipe-btn tm-swipe-btn-detail" type="button" data-focus-details>
+                  <span class="icon is-small" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  </span>
+                  <span>Ver detalhes</span>
+                </button>
+
+                <form method="post" action="{{ url_for('contratante.interesse_candidato', id=usuario.id) }}" data-swipe-action="like">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="vaga_id" value="{{ vaga_selecionada.id if vaga_selecionada else '' }}">
+                  <button class="button tm-swipe-btn tm-swipe-btn-like {% if not vaga_selecionada %}tm-swipe-btn-locked{% endif %}" type="submit" aria-label="{{ 'Selecione uma vaga primeiro' if not vaga_selecionada else 'Tenho interesse' }}"
+                    {% if not vaga_selecionada %}disabled title="Selecione uma vaga primeiro"{% endif %}>
+                    {% if vaga_selecionada %}
+                      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l7.78-8.84a5.5 5.5 0 0 0 1.06-7.78z"/></svg>
+                    {% else %}
+                      {{ lock_icon() }}
+                    {% endif %}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </article>
+        {% else %}
+          <div class="tm-swipe-empty" data-swipe-empty>
+            <h2>Nenhum candidato encontrado</h2>
+            <p>Não há candidatos disponíveis para os filtros atuais.</p>
+          </div>
+        {% endfor %}
+
+        {% if candidatos %}
+          <div class="tm-swipe-empty is-hidden" data-swipe-empty>
+            <h2>Você avaliou todos os candidatos</h2>
+            <p>Volte mais tarde ou ajuste os filtros para ver novos perfis.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if candidatos %}
+        <div class="tm-discovery-nav">
+          <button class="button tm-discovery-arrow" type="button" data-card-prev aria-label="Candidato anterior" {% if not vaga_selecionada %}disabled title="Selecione uma vaga primeiro"{% endif %}>‹</button>
+          <p class="tm-swipe-counter" data-swipe-counter>1 de {{ candidatos|length }} candidatos</p>
+          <button class="button tm-discovery-arrow" type="button" data-card-next aria-label="Próximo candidato" {% if not vaga_selecionada %}disabled title="Selecione uma vaga primeiro"{% endif %}>›</button>
+        </div>
+      {% endif %}
+    </main>
+
+    <aside class="tm-discovery-details {% if not vaga_selecionada %}is-locked{% endif %}" data-details-panel tabindex="-1">
+      <div class="tm-details-card">
+        {% if not vaga_selecionada %}
+        <div class="tm-discovery-lock-overlay tm-discovery-lock-overlay--details" aria-live="polite">
+          <span class="tm-discovery-lock-icon">{{ lock_icon() }}</span>
+          <strong>Detalhes bloqueados</strong>
+          <p>
+            {% if vagas_abertas %}
+              Escolha uma vaga para liberar a avaliação deste candidato.
+            {% else %}
+              Publique uma vaga antes de avaliar candidatos.
+            {% endif %}
+          </p>
+        </div>
+        {% endif %}
+
+        <div class="tm-details-head">
+          <h2>Detalhes do candidato</h2>
+          <span class="tm-details-close" aria-hidden="true">×</span>
+        </div>
+
+        <div class="tm-details-empty {% if candidatos %}is-hidden{% endif %}" data-details-empty>
+          <h3>Nenhum candidato selecionado</h3>
+          <p>Use os filtros ou aguarde novos cadastros para ver detalhes aqui.</p>
+        </div>
+
+        <div class="tm-details-content {% if not candidatos %}is-hidden{% endif %}" data-details-content>
+          <div class="tm-details-hero">
+            <div class="tm-details-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="tm-details-title-group">
+              <div class="tm-details-title-row">
+                <h3 data-details-title></h3>
+                <span class="tm-swipe-match-badge" data-details-match></span>
+              </div>
+              <div class="tm-swipe-meta tm-details-meta">
+                <span data-details-region></span>
+                <span data-details-tipo></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tm-details-section">
+            <h4>Experiência resumida</h4>
+            <p data-details-experiencia></p>
+          </div>
+
+          <div class="tm-details-info-list">
+            <div class="tm-details-info-box">
+              <span class="tm-swipe-info-icon tm-swipe-info-icon--orange" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+              </span>
+              <div>
+                <span>Nível de experiência</span>
+                <strong data-details-nivel></strong>
+              </div>
+            </div>
+            <div class="tm-details-info-box">
+              <span class="tm-swipe-info-icon tm-swipe-info-icon--green" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+              <div>
+                <span>Disponibilidade</span>
+                <strong data-details-disponibilidade></strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="tm-details-section">
+            <h4>Habilidades</h4>
+            <div class="tm-swipe-chips" data-details-skills></div>
+          </div>
+
+          <div class="tm-details-section">
+            <h4>Currículo</h4>
+            <button class="button tm-btn-outline tm-cv-link" type="button" data-details-curriculo>Visualizar currículo</button>
+            <p class="tm-cv-missing" data-details-curriculo-empty>Currículo não enviado.</p>
+          </div>
+
+          <div class="tm-details-match-summary" data-details-summary-wrap>
+            <strong>Por que esse match?</strong>
+            <p data-details-summary></p>
+          </div>
+
+          <div class="tm-details-interest">
+            <h4>Tem interesse neste candidato?</h4>
+            <div class="tm-details-actions">
+              <button class="button tm-details-skip" type="button" data-panel-action="skip"
+                {% if not vaga_selecionada %}disabled title="Selecione uma vaga primeiro"{% endif %}>Não tenho interesse</button>
+              <button class="button tm-btn-primary {% if not vaga_selecionada %}tm-details-locked{% endif %}" type="button" data-panel-action="like"
+                {% if not vaga_selecionada %}disabled title="Selecione uma vaga primeiro"{% endif %}>
+                {% if vaga_selecionada %}
+                  Tenho interesse
+                {% else %}
+                  <span class="tm-button-icon">{{ lock_icon() }}</span>
+                  <span>Selecione uma vaga</span>
+                {% endif %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="modal tm-detalhe-modal tm-cv-viewer-modal" id="modal-curriculo-visualizar">
+      <div class="modal-background tm-modal-bg"></div>
+      <div class="modal-card tm-cv-viewer-card">
+        <header class="modal-card-head tm-modal-head">
+          <div>
+            <p class="tm-modal-titulo" data-cv-viewer-title>Currículo</p>
+            <div class="tm-card-meta mt-1"><span>Pré-visualização do currículo do candidato</span></div>
+          </div>
+          <button class="delete is-medium tm-modal-fechar" aria-label="Fechar"></button>
+        </header>
+        <section class="modal-card-body tm-cv-viewer-body">
+          <iframe title="Visualização do currículo" data-cv-viewer-frame></iframe>
+          <div class="tm-cv-viewer-fallback" data-cv-viewer-fallback>
+            <strong>Pré-visualização indisponível para este formato.</strong>
+            <p>Baixe o currículo para abrir arquivos DOC ou DOCX.</p>
+          </div>
+        </section>
+        <footer class="modal-card-foot tm-modal-foot">
+          <a class="button tm-btn-outline" href="#" data-cv-viewer-download>Baixar currículo</a>
+          <button class="button tm-mv-btn-fechar tm-modal-fechar">Fechar</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const _regioes = {{ regioes|tojson }};
+    const _coordenadas = {{ coordenadas_regioes|tojson }};
+    const filtroInput = document.getElementById('regiao');
+    const filtroSugestoes = document.getElementById('filtro-regiao-sugestoes');
+    const filtroLocBtn = document.getElementById('filtro-usar-localizacao');
+
+    if (filtroInput && filtroSugestoes) {
+      const normalize = (v) => v.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      const distance = (a, b) => {
+        const d = a.lat - b.lat, e = a.lng - b.lng;
+        return Math.sqrt(d * d + e * e);
+      };
+      const closestRegion = (coords) =>
+        Object.entries(_coordenadas)
+          .map(([name, pt]) => ({ name, d: distance({ lat: coords.latitude, lng: coords.longitude }, pt) }))
+          .sort((a, b) => a.d - b.d)[0].name;
+
+      filtroInput.addEventListener('input', () => {
+        filtroSugestoes.innerHTML = '';
+        const q = normalize(filtroInput.value.trim());
+        if (!q) return;
+        _regioes.filter((r) => normalize(r).includes(q)).slice(0, 6).forEach((r) => {
+          const btn = document.createElement('button');
+          btn.className = 'tm-pill'; btn.type = 'button'; btn.textContent = r;
+          btn.addEventListener('click', () => { filtroInput.value = r; filtroSugestoes.innerHTML = ''; });
+          filtroSugestoes.appendChild(btn);
+        });
+      });
+
+      filtroLocBtn?.addEventListener('click', () => {
+        if (!navigator.geolocation) return;
+        filtroLocBtn.disabled = true;
+        navigator.geolocation.getCurrentPosition(
+          (pos) => { filtroInput.value = closestRegion(pos.coords); filtroSugestoes.innerHTML = ''; filtroLocBtn.disabled = false; },
+          () => { filtroLocBtn.disabled = false; },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+        );
+      });
+    }
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cards = Array.from(document.querySelectorAll('[data-swipe-card]'));
+    const emptyState = document.querySelector('[data-swipe-empty]');
+    const counter = document.querySelector('[data-swipe-counter]');
+    const swipeFeedback = document.querySelector('[data-swipe-feedback]');
+    const detailsPanel = document.querySelector('[data-details-panel]');
+    const detailsContent = document.querySelector('[data-details-content]');
+    const detailsEmpty = document.querySelector('[data-details-empty]');
+    const filterPanel = document.querySelector('[data-filter-panel]');
+    const cvViewerModal = document.getElementById('modal-curriculo-visualizar');
+    const totalCards = cards.length;
+    let activeIndex = 0;
+    let startX = 0, currentX = 0, dragging = false, animating = false;
+    const threshold = 110;
+
+    const parseJson = (v, fb) => { try { return v ? JSON.parse(v) : fb; } catch { return fb; } };
+    const setText = (sel, val) => { const n = detailsPanel?.querySelector(sel); if (n) n.textContent = val || ''; };
+
+    const updateDetailsPanel = (card) => {
+      if (!detailsPanel) return;
+      if (!card) { detailsContent?.classList.add('is-hidden'); detailsEmpty?.classList.remove('is-hidden'); return; }
+      detailsContent?.classList.remove('is-hidden'); detailsEmpty?.classList.add('is-hidden');
+      setText('[data-details-title]', card.dataset.title);
+      setText('[data-details-region]', card.dataset.region);
+      setText('[data-details-tipo]', card.dataset.tipo);
+      setText('[data-details-nivel]', card.dataset.nivel);
+      setText('[data-details-disponibilidade]', card.dataset.disponibilidade);
+      setText('[data-details-experiencia]', card.dataset.experiencia || 'Não informado.');
+
+      const match = detailsPanel.querySelector('[data-details-match]');
+      if (match) { if (card.dataset.match) { match.textContent = `${card.dataset.match}% Match`; match.style.display = ''; } else { match.style.display = 'none'; } }
+
+      const skills = parseJson(card.dataset.skills, []);
+      const skillsBox = detailsPanel.querySelector('[data-details-skills]');
+      if (skillsBox) { skillsBox.innerHTML = ''; skills.forEach((s) => { const c = document.createElement('span'); c.className = 'tm-swipe-chip'; c.textContent = s.charAt(0).toUpperCase() + s.slice(1); skillsBox.appendChild(c); }); }
+
+      const mr = parseJson(card.dataset.matchResult, {});
+      const sw = detailsPanel.querySelector('[data-details-summary-wrap]');
+      if (sw) { if (mr.resumo) { setText('[data-details-summary]', mr.resumo); sw.style.display = ''; } else { sw.style.display = 'none'; } }
+
+      const cvLink = detailsPanel.querySelector('[data-details-curriculo]');
+      const cvEmpty = detailsPanel.querySelector('[data-details-curriculo-empty]');
+      if (cvLink && cvEmpty) {
+        if (card.dataset.curriculoUrl) {
+          cvLink.textContent = card.dataset.curriculoNome ? `Ver currículo (${card.dataset.curriculoNome})` : 'Ver currículo';
+          cvLink.dataset.cvName = card.dataset.curriculoNome || 'Currículo';
+          cvLink.dataset.cvViewUrl = card.dataset.curriculoViewUrl || card.dataset.curriculoUrl;
+          cvLink.dataset.cvDownloadUrl = card.dataset.curriculoUrl;
+          cvLink.style.display = '';
+          cvEmpty.style.display = 'none';
+        } else {
+          cvLink.style.display = 'none';
+          cvEmpty.style.display = '';
+        }
+      }
+    };
+
+    const openCvViewer = (button) => {
+      if (!cvViewerModal) return;
+      const frame = cvViewerModal.querySelector('[data-cv-viewer-frame]');
+      const fallback = cvViewerModal.querySelector('[data-cv-viewer-fallback]');
+      const title = cvViewerModal.querySelector('[data-cv-viewer-title]');
+      const download = cvViewerModal.querySelector('[data-cv-viewer-download]');
+      const name = button.dataset.cvName || 'Currículo';
+      const viewUrl = button.dataset.cvViewUrl;
+      const downloadUrl = button.dataset.cvDownloadUrl || viewUrl;
+      const canPreview = name.toLowerCase().endsWith('.pdf');
+
+      if (title) title.textContent = name;
+      if (download) download.href = downloadUrl;
+      if (frame) {
+        frame.src = canPreview ? viewUrl : '';
+        frame.style.display = canPreview ? '' : 'none';
+      }
+      if (fallback) fallback.style.display = canPreview ? 'none' : '';
+      cvViewerModal.classList.remove('is-closing');
+      cvViewerModal.classList.add('is-active');
+      document.documentElement.classList.add('is-clipped');
+    };
+
+    const updateCounter = () => { if (!counter) return; if (activeIndex >= totalCards) { counter.style.display = 'none'; } else { counter.textContent = `${activeIndex + 1} de ${totalCards} candidatos`; } };
+    const setSwipeFeedback = (dir) => { if (!swipeFeedback) return; swipeFeedback.classList.remove('is-visible', 'is-like', 'is-skip'); if (!dir) return; swipeFeedback.classList.add('is-visible', dir === 'like' ? 'is-like' : 'is-skip'); };
+
+    const updateStack = () => {
+      setSwipeFeedback(null);
+      cards.forEach((c, i) => { c.classList.toggle('is-active', i === activeIndex); c.classList.toggle('is-next', i === activeIndex + 1); });
+      updateDetailsPanel(cards[activeIndex] || null);
+      if (activeIndex >= cards.length && emptyState) emptyState.classList.remove('is-hidden');
+      updateCounter();
+    };
+
+    const setCardPosition = (card, dx) => { card.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`; card.classList.toggle('is-liking', dx > 35); card.classList.toggle('is-skipping', dx < -35); setSwipeFeedback(dx > 35 ? 'like' : dx < -35 ? 'skip' : null); };
+    const resetCard = (card) => { card.style.transform = ''; card.classList.remove('is-dragging', 'is-liking', 'is-skipping', 'is-flying-left', 'is-flying-right'); setSwipeFeedback(null); };
+
+    const persistAction = async (form) => {
+      const r = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!r.ok) throw new Error('A ação não pôde ser registrada.');
+      return r.json();
+    };
+
+    const finishSwipe = async (card, direction) => {
+      if (animating) return;
+      const form = card.querySelector(`[data-swipe-action="${direction}"]`);
+      if (!form) return;
+      animating = true;
+      card.classList.add(direction === 'like' ? 'is-flying-right' : 'is-flying-left');
+      card.classList.toggle('is-liking', direction === 'like');
+      card.classList.toggle('is-skipping', direction === 'skip');
+      setSwipeFeedback(direction);
+      try {
+        const data = await persistAction(form);
+        window.setTimeout(() => {
+          card.classList.remove('is-active', 'is-next');
+          activeIndex += 1; currentX = 0; animating = false;
+          setSwipeFeedback(null); updateStack();
+          if (data.match) { const msg = document.createElement('div'); msg.className = 'tm-match-toast'; msg.textContent = '🎉 É um match!'; document.body.appendChild(msg); window.setTimeout(() => msg.remove(), 3000); }
+        }, 230);
+      } catch (err) {
+        window.setTimeout(() => { resetCard(card); animating = false; setSwipeFeedback(null); alert(err.message); }, 180);
+      }
+    };
+
+    cards.forEach((card) => {
+      card.querySelectorAll('[data-swipe-action]').forEach((form) => {
+        form.addEventListener('submit', (e) => { e.preventDefault(); if (!card.classList.contains('is-active')) return; finishSwipe(card, form.dataset.swipeAction); });
+      });
+      card.querySelector('[data-focus-details]')?.addEventListener('click', () => { updateDetailsPanel(card); detailsPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' }); detailsPanel?.focus({ preventScroll: true }); });
+      card.addEventListener('pointerdown', (e) => { if (!card.classList.contains('is-active') || animating || e.target.closest('button, a, form')) return; dragging = true; startX = e.clientX; card.setPointerCapture(e.pointerId); card.classList.add('is-dragging'); });
+      card.addEventListener('pointermove', (e) => { if (!dragging || !card.classList.contains('is-active')) return; currentX = e.clientX - startX; setCardPosition(card, currentX); });
+      card.addEventListener('pointerup', () => { if (!dragging || !card.classList.contains('is-active')) return; dragging = false; card.classList.remove('is-dragging'); if (currentX >= threshold) { finishSwipe(card, 'like'); return; } if (currentX <= -threshold) { finishSwipe(card, 'skip'); return; } currentX = 0; resetCard(card); });
+      card.addEventListener('pointercancel', () => { dragging = false; currentX = 0; resetCard(card); setSwipeFeedback(null); });
+    });
+
+    document.querySelectorAll('[data-panel-action]').forEach((btn) => {
+      btn.addEventListener('click', () => { const ac = cards[activeIndex]; if (!ac) return; const f = ac.querySelector(`[data-swipe-action="${btn.dataset.panelAction}"]`); if (f) finishSwipe(ac, f.dataset.swipeAction); });
+    });
+
+    document.querySelector('[data-details-curriculo]')?.addEventListener('click', (event) => {
+      openCvViewer(event.currentTarget);
+    });
+
+    document.querySelectorAll('.tm-modal-fechar, .tm-modal-bg').forEach((el) => {
+      el.addEventListener('click', () => {
+        const modal = el.closest('.modal');
+        if (!modal) return;
+        modal.classList.remove('is-active');
+        modal.classList.add('is-closing');
+        document.documentElement.classList.remove('is-clipped');
+        setTimeout(() => modal.classList.remove('is-closing'), 180);
+      });
+    });
+
+    document.querySelector('[data-card-prev]')?.addEventListener('click', () => { if (activeIndex <= 0 || animating) return; resetCard(cards[activeIndex]); activeIndex -= 1; updateStack(); });
+    document.querySelector('[data-card-next]')?.addEventListener('click', () => { if (activeIndex >= totalCards - 1 || animating) return; resetCard(cards[activeIndex]); activeIndex += 1; updateStack(); });
+    document.querySelectorAll('[data-filter-toggle]').forEach((btn) => { btn.addEventListener('click', () => filterPanel?.classList.toggle('is-open')); });
+
+    updateStack();
+  });
+</script>
+{% endblock %}

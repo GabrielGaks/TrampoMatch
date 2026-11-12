@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — TrampoMatch{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section">
+  <div class="container">
+
+    {# ── Banner de boas-vindas ── #}
+    <div class="tm-db-banner">
+      <div class="tm-db-banner-body">
+        <span class="tm-eyebrow">Contratante</span>
+        <h1>Olá, {{ primeiro_nome }}! 👋</h1>
+        <p>Gerencie suas vagas e encontre<br>os melhores candidatos.</p>
+        <div class="tm-hero-buttons">
+          <a class="button tm-btn-primary" href="{{ url_for('contratante.nova_vaga') }}">
+            <span class="icon is-small">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            </span>
+            <span>Cadastrar vaga</span>
+          </a>
+          <a class="button tm-btn-outline" href="{{ url_for('contratante.candidatos') }}">
+            <span class="icon is-small">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span>Ver candidatos</span>
+          </a>
+        </div>
+      </div>
+      <div class="tm-db-banner-art" aria-hidden="true">
+        <img src="{{ url_for('static', filename='img/hero-dashboard.png') }}" alt="">
+      </div>
+    </div>
+
+    {# ── Cards de estatísticas ── #}
+    <div class="tm-dashboard-grid" style="margin-bottom:0">
+
+      <div class="tm-db-stat-card">
+        <div class="tm-db-stat-icon is-blue">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        </div>
+        <div>
+          <div class="tm-db-stat-label">Vagas publicadas</div>
+          <div class="tm-db-stat-value">{{ total_vagas }}</div>
+          <div class="tm-db-stat-sub">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="height:.7rem;width:.7rem"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ vagas_abertas }} abertas
+          </div>
+        </div>
+      </div>
+
+      <div class="tm-db-stat-card">
+        <div class="tm-db-stat-icon is-green">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="tm-db-stat-label">Candidatos</div>
+          <div class="tm-db-stat-value">{{ total_candidatos }}</div>
+          <div class="tm-db-stat-sub" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.2rem">
+            <span class="tm-dash-hint-pill tm-dash-hint-pill--green">{{ total_curtidos }} curtido{{ 's' if total_curtidos != 1 }}</span>
+            <span class="tm-dash-hint-pill tm-dash-hint-pill--purple">{{ total_matches }} match{{ 'es' if total_matches != 1 }}</span>
+          </div>
+        </div>
+        <a href="{{ url_for('contratante.candidatos') }}" class="tm-dash-stat-arrow" title="Ver candidatos">›</a>
+      </div>
+
+      <div class="tm-db-stat-card">
+        <div class="tm-db-stat-icon is-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+        </div>
+        <div>
+          <div class="tm-db-stat-label">Matches</div>
+          <div class="tm-db-stat-value">{{ total_matches }}</div>
+          <div class="tm-db-stat-sub is-neutral">Candidatos compatíveis</div>
+        </div>
+      </div>
+
+      <div class="tm-db-stat-card">
+        <div class="tm-db-stat-icon is-orange">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div>
+          <div class="tm-db-stat-label">Interessados</div>
+          <div class="tm-db-stat-value">{{ total_interessados }}</div>
+          <div class="tm-db-stat-sub is-neutral">Em suas vagas</div>
+        </div>
+      </div>
+
+    </div>
+
+    {# ── Grade de três colunas ── #}
+    <div class="tm-db-columns">
+
+      {# Coluna 1: Vagas publicadas #}
+      <div class="tm-db-col-card">
+        <div class="tm-db-col-header">
+          <span class="tm-db-col-title">Vagas publicadas</span>
+          <a class="tm-section-link" href="{{ url_for('contratante.minhas_vagas') }}">Ver todas</a>
+        </div>
+
+        {% for vaga in vagas_recentes %}
+          {% set delta_dias = (agora - vaga.criado_em).days %}
+        <div class="tm-db-vaga-row">
+          <div class="tm-db-vaga-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          </div>
+          <div>
+            <div class="tm-db-vaga-name">{{ vaga.titulo }}</div>
+            <div class="tm-db-vaga-meta">
+              <strong>{{ vaga.total_interessados() }}</strong> interessados
+              &middot;
+              {% if delta_dias == 0 %}Hoje{% elif delta_dias == 1 %}Há 1 dia{% else %}Há {{ delta_dias }} dias{% endif %}
+              &middot; {{ vaga.regiao }}
+            </div>
+          </div>
+          <span class="tm-db-status-badge is-{{ vaga.status }}">
+            {{ 'Aberta' if vaga.status == 'aberta' else 'Encerrada' }}
+          </span>
+        </div>
+        {% else %}
+        <p style="color:var(--text-muted);font-size:.82rem;padding:.75rem 0;text-align:center">
+          Nenhuma vaga cadastrada ainda.
+        </p>
+        {% endfor %}
+
+        {% if vagas_recentes %}
+        <a class="tm-section-link" href="{{ url_for('contratante.minhas_vagas') }}"
+           style="display:block;font-size:.8rem;margin-top:.5rem;text-align:center">
+          Ver todas as vagas &rsaquo;
+        </a>
+        {% endif %}
+      </div>
+
+      {# Coluna 2: Candidatos compatíveis #}
+      <div class="tm-db-col-card">
+        <div class="tm-db-col-header">
+          <span class="tm-db-col-title">Candidatos compatíveis</span>
+          <a class="tm-section-link" href="{{ url_for('contratante.candidatos') }}">Ver todos</a>
+        </div>
+
+        {% if candidatos_por_vaga %}
+        {% for grupo in candidatos_por_vaga %}
+        <div class="tm-db-vaga-group">
+          <div class="tm-db-vaga-group-head">
+            <span class="tm-db-vaga-name">{{ grupo.vaga.titulo }}</span>
+            <a class="tm-db-vaga-arrow" href="{{ url_for('contratante.candidatos', vaga_id=grupo.vaga.id) }}" title="Ver vaga" aria-label="Ver vaga {{ grupo.vaga.titulo }}">›</a>
+          </div>
+
+          {% for c in grupo.candidatos %}
+          <div class="tm-db-cand-row">
+            <div class="tm-db-cand-avatar">{{ c.usuario.nome[0].upper() }}</div>
+            <div>
+              <div class="tm-db-cand-name">{{ c.usuario.nome }}</div>
+              <div class="tm-db-cand-role">{{ c.perfil.tipo_trabalho }}</div>
+              {% if c.habilidades %}
+              <div class="tm-db-skill-tags">
+                {% for h in c.habilidades %}
+                <span class="tm-db-skill-tag">{{ h|capitalize }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <span class="tm-db-match-badge">{{ c.score|int }}% Match</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="color:var(--text-muted);font-size:.82rem;padding:.75rem 0;text-align:center">
+          {% if vagas_abertas %}
+          Nenhum candidato compatível nas suas vagas abertas no momento.
+          {% else %}
+          Nenhuma vaga aberta no momento.
+          {% endif %}
+        </p>
+        {% endif %}
+
+        <a class="tm-section-link" href="{{ url_for('contratante.candidatos') }}"
+           style="display:block;font-size:.8rem;margin-top:.5rem;text-align:center">
+          Ver todos os candidatos &rsaquo;
+        </a>
+      </div>
+
+      {# Coluna 3: Atividades recentes #}
+      <div class="tm-db-col-card">
+        <div class="tm-db-col-header">
+          <span class="tm-db-col-title">Atividades recentes</span>
+        </div>
+
+        {% for a in atividades %}
+        <div class="tm-db-act-row">
+          <div class="tm-db-act-icon is-{{ a.tipo }}">
+            {% if a.tipo == 'interesse' %}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {% elif a.tipo == 'match' %}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            {% endif %}
+          </div>
+          <div class="tm-db-act-text">{{ a.descricao }}</div>
+          <div class="tm-db-act-time">{{ a.tempo }}</div>
+        </div>
+        {% else %}
+        <p style="color:var(--text-muted);font-size:.82rem;padding:.75rem 0;text-align:center">
+          Nenhuma atividade recente.
+        </p>
+        {% endfor %}
+
+        {% if atividades %}
+        <a class="tm-section-link" href="{{ url_for('contratante.minhas_vagas') }}"
+           style="display:block;font-size:.8rem;margin-top:.5rem;text-align:center">
+          Ver todas as atividades &rsaquo;
+        </a>
+        {% endif %}
+      </div>
+
+    </div>
+
+    {# ── Faixa de conclusão do perfil ── #}
+    {% if perfil %}
+    <div class="tm-db-profile-strip">
+      <div class="tm-db-profile-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div>
+        <div class="tm-db-profile-title">Perfil da empresa</div>
+        <div class="tm-db-profile-sub">Um perfil completo aumenta suas chances de encontrar os melhores candidatos.</div>
+      </div>
+      <div>
+        <div class="tm-db-progress-label">
+          <span>Perfil completo</span>
+          <strong style="color:var(--text-dark)">{{ perfil.percentual_completo }}%</strong>
+        </div>
+        <div class="tm-db-progress-bar">
+          <span class="tm-db-progress-fill" style="width:{{ perfil.percentual_completo }}%"></span>
+        </div>
+        <div class="tm-db-checklist">
+          <div class="tm-db-checklist-item {{ 'is-done' if perfil.descricao }}">
+            {% if perfil.descricao %}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="height:.65rem;width:.65rem"><polyline points="20 6 9 17 4 12"/></svg>{% else %}<span style="font-size:.5rem">○</span>{% endif %}
+            Descrição da empresa
+          </div>
+          <div class="tm-db-checklist-item {{ 'is-done' if perfil.tipo_contratante }}">
+            {% if perfil.tipo_contratante %}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="height:.65rem;width:.65rem"><polyline points="20 6 9 17 4 12"/></svg>{% else %}<span style="font-size:.5rem">○</span>{% endif %}
+            Segmento
+          </div>
+          <div class="tm-db-checklist-item {{ 'is-done' if perfil.logo_empresa }}">
+            {% if perfil.logo_empresa %}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="height:.65rem;width:.65rem"><polyline points="20 6 9 17 4 12"/></svg>{% else %}<span style="font-size:.5rem">○</span>{% endif %}
+            Logo da empresa
+          </div>
+          <div class="tm-db-checklist-item {{ 'is-done' if perfil.areas_atuacao }}">
+            {% if perfil.areas_atuacao %}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="height:.65rem;width:.65rem"><polyline points="20 6 9 17 4 12"/></svg>{% else %}<span style="font-size:.5rem">○</span>{% endif %}
+            Áreas de atuação
+          </div>
+        </div>
+      </div>
+      <a class="button tm-btn-primary" href="{{ url_for('contratante.perfil') }}">Completar perfil</a>
+    </div>
+    {% else %}
+    <div class="notification is-warning is-light" style="margin-top:1.5rem">
+      <a href="{{ url_for('contratante.perfil') }}">Complete seu perfil</a> antes de divulgar vagas.
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

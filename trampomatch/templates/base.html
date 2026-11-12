@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+  {% block head %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TrampoMatch{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+  {% block css %}{% endblock %}
+  {% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div class="tm-page-wrapper">
+  <header>
+    {% block navbar %}{% include 'main/partials/navbar.html' %}{% endblock %}
+  </header>
+
+  {# Flash messages passadas como JSON para o JS — evita quebra de position:fixed por containing blocks #}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <script>
+        window.__TM_FLASH__ = [{% for category, message in messages %}{"cat":{{ ('danger' if category in ('error','danger') else category)|tojson }},"msg":{{ message|tojson }}}{% if not loop.last %},{% endif %}{% endfor %}];
+      </script>
+      <div class="is-sr-only" aria-live="polite">
+        {% for category, message in messages %}
+          <p class="tm-flash-message tm-flash-message--{{ category }}">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="tm-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer tm-footer">
+    <div class="container">
+      {% block footer %}{% include 'main/partials/footer.html' %}{% endblock %}
+    </div>
+  </footer>
+  </div>{# /.tm-page-wrapper #}
+
+  {% block scripts %}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // ── Page transitions ─────────────────────────────────────────
+      document.addEventListener('click', e => {
+        const link = e.target.closest('a[href]');
+        if (!link) return;
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript') ||
+            link.target === '_blank' || link.origin !== location.origin ||
+            link.hasAttribute('data-no-transition')) return;
+        e.preventDefault();
+        const wrapper = document.querySelector('.tm-page-wrapper');
+        if (wrapper) wrapper.classList.add('tm-page-out');
+        setTimeout(() => { window.location = href; }, 55);
+      });
+
+      // ── Scroll reveal (IntersectionObserver) ─────────────────────
+      const revealObs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            revealObs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+      document.querySelectorAll('.tm-reveal').forEach(el => revealObs.observe(el));
+
+      // ── Navbar glass scroll ──────────────────────────────────────
+      (function () {
+        const nav = document.querySelector('.tm-navbar');
+        if (!nav) return;
+        const update = () => nav.classList.toggle('is-scrolled', window.scrollY > 10);
+        update();
+        window.addEventListener('scroll', update, { passive: true });
+      })();
+
+      // ── Navbar burger ────────────────────────────────────────────
+      document.querySelectorAll('.navbar-burger').forEach(burger => {
+        burger.addEventListener('click', () => {
+          const target = document.getElementById(burger.dataset.target);
+          burger.classList.toggle('is-active');
+          if (target) target.classList.toggle('is-active');
+        });
+      });
+
+      // ── Toast notifications ──────────────────────────────────────
+      const TOAST_DURATION = 4500;
+
+      const TOAST_ICONS = {
+        success: '<path d="M20 6 9 17l-5-5"/>',
+        warning: '<path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>',
+        danger:  '<path d="M18 6 6 18M6 6l12 12"/>',
+        info:    '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/>',
+      };
+
+      function getToastContainer() {
+        let el = document.getElementById('tm_toast_container');
+        if (!el) {
+          el = document.createElement('div');
+          el.id = 'tm_toast_container';
+          el.className = 'tm-toast-container';
+          el.setAttribute('aria-live', 'polite');
+          el.setAttribute('aria-atomic', 'false');
+          document.body.appendChild(el);
+        }
+        return el;
+      }
+
+      function dismissToast(toast) {
+        if (toast.dataset.leaving) return;
+        toast.dataset.leaving = '1';
+        toast.classList.add('is-leaving');
+        toast.addEventListener('animationend', () => toast.remove(), { once: true });
+      }
+
+      function showToast(cat, msg) {
+        const container = getToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `tm-toast tm-toast--${cat}`;
+        toast.setAttribute('role', 'alert');
+        const icon = TOAST_ICONS[cat] || TOAST_ICONS.info;
+        toast.innerHTML =
+          `<div class="tm-toast-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>` +
+          `<p class="tm-toast-msg">${msg}</p>` +
+          `<button class="tm-toast-close" aria-label="Fechar aviso">&times;</button>` +
+          `<span class="tm-toast-progress" aria-hidden="true"></span>`;
+        container.appendChild(toast);
+
+        const timer = setTimeout(() => dismissToast(toast), TOAST_DURATION);
+        toast.querySelector('.tm-toast-close').addEventListener('click', () => {
+          clearTimeout(timer);
+          dismissToast(toast);
+        });
+      }
+
+      (window.__TM_FLASH__ || []).forEach(({ cat, msg }) => showToast(cat, msg));
+
+      // ── Custom selects ────────────────────────────────────────────
+      const closeCustomSelects = (except = null) => {
+        document.querySelectorAll('.tm-custom-select.is-open').forEach(select => {
+          if (select !== except) {
+            select.classList.remove('is-open');
+            select.querySelector('.tm-custom-select-button')?.setAttribute('aria-expanded', 'false');
+          }
+        });
+      };
+
+      document.querySelectorAll('.tm-custom-select-native').forEach(nativeSelect => {
+        if (nativeSelect.dataset.customSelectReady === 'true') return;
+        nativeSelect.dataset.customSelectReady = 'true';
+
+        const wrapper = nativeSelect.closest('.tm-native-select-wrap');
+        if (!wrapper) return;
+        wrapper.classList.add('is-enhanced');
+
+        const customSelect = document.createElement('div');
+        customSelect.className = 'tm-custom-select';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'tm-custom-select-button';
+        button.setAttribute('aria-haspopup', 'listbox');
+        button.setAttribute('aria-expanded', 'false');
+
+        const value = document.createElement('span');
+        value.className = 'tm-custom-select-value';
+
+        const icon = document.createElement('span');
+        icon.className = 'tm-custom-select-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>';
+
+        button.append(value, icon);
+
+        const menu = document.createElement('div');
+        menu.className = 'tm-custom-select-menu';
+        menu.setAttribute('role', 'listbox');
+
+        const options = Array.from(nativeSelect.options).map(option => {
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'tm-custom-select-option';
+          item.textContent = option.textContent;
+          item.dataset.value = option.value;
+          item.setAttribute('role', 'option');
+
+          if (option.disabled) {
+            item.disabled = true;
+          }
+
+          item.addEventListener('click', () => {
+            nativeSelect.value = option.value;
+            nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            updateSelection();
+            closeCustomSelects();
+          });
+
+          menu.appendChild(item);
+          return item;
+        });
+
+        const updateSelection = () => {
+          const selected = nativeSelect.selectedOptions[0] || nativeSelect.options[0];
+          value.textContent = selected ? selected.textContent : 'Selecionar';
+          options.forEach(item => {
+            const isSelected = item.dataset.value === nativeSelect.value;
+            item.classList.toggle('is-selected', isSelected);
+            item.setAttribute('aria-selected', String(isSelected));
+          });
+        };
+
+        button.addEventListener('click', () => {
+          const shouldOpen = !customSelect.classList.contains('is-open');
+          closeCustomSelects(customSelect);
+          customSelect.classList.toggle('is-open', shouldOpen);
+          button.setAttribute('aria-expanded', String(shouldOpen));
+        });
+
+        button.addEventListener('keydown', event => {
+          if (!['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) return;
+          event.preventDefault();
+          const enabledOptions = options.filter(option => !option.disabled);
+          const currentIndex = enabledOptions.findIndex(option => option.dataset.value === nativeSelect.value);
+          const nextIndex = event.key === 'ArrowUp'
+            ? Math.max(currentIndex - 1, 0)
+            : Math.min(currentIndex + 1, enabledOptions.length - 1);
+
+          if (event.key === 'Enter' || event.key === ' ') {
+            customSelect.classList.add('is-open');
+            button.setAttribute('aria-expanded', 'true');
+            return;
+          }
+
+          enabledOptions[nextIndex]?.click();
+        });
+
+        nativeSelect.addEventListener('change', updateSelection);
+        customSelect.append(button, menu);
+        wrapper.insertAdjacentElement('afterend', customSelect);
+        updateSelection();
+      });
+
+      document.addEventListener('click', event => {
+        if (!event.target.closest('.tm-custom-select')) {
+          closeCustomSelects();
+        }
+      });
+    });
+  </script>
+  {% endblock %}
+</body>
+</html>

@@ -1,0 +1,816 @@
+{% extends 'base.html' %}
+
+{% block title %}Completar perfil - TrampoMatch{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section tm-google-onboarding-page">
+  <div class="container">
+    {% if tipo_perfil == 'contratante' %}
+      <div class="tm-company-hero tm-reveal">
+        <div class="tm-company-hero-title">
+          <span class="tm-company-hero-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h1"/><path d="M9 13h1"/><path d="M9 17h1"/>
+            </svg>
+          </span>
+          <div>
+            <h1>Perfil da Empresa</h1>
+            <p>Complete seu perfil para publicar vagas e atrair os melhores talentos.</p>
+          </div>
+        </div>
+        <div class="tm-company-hero-progress">
+          <strong>Seu perfil está <span>{{ percentual_base }}% completo</span></strong>
+          <div class="tm-google-progress-track">
+            <span style="width: {{ percentual_base }}%"></span>
+          </div>
+          <p id="tm-wizard-summary">Etapa 1 de 3 · 2 de 3 etapas concluídas</p>
+        </div>
+        <img src="{{ url_for('static', filename='img/hero-contratante-onboarding.png') }}" alt="" aria-hidden="true">
+      </div>
+    {% else %}
+      <div class="tm-google-onboarding-hero tm-reveal">
+        <div>
+          <h1>Bem-vindo, {{ primeiro_nome }}!</h1>
+          <p>Complete seu perfil para encontrar vagas compatíveis com sua experiência.</p>
+        </div>
+        <div class="tm-google-progress">
+          <strong>Seu perfil está <span>{{ percentual_base }}% completo</span></strong>
+          <div class="tm-google-progress-track">
+            <span style="width: {{ percentual_base }}%"></span>
+          </div>
+          <p>Preencha as informações abaixo para concluir seu cadastro.</p>
+        </div>
+        <img src="{{ url_for('static', filename='img/hero-dashboard.png') }}" alt="" aria-hidden="true">
+      </div>
+    {% endif %}
+
+    <div class="tm-google-onboarding-grid {% if tipo_perfil == 'contratante' %}is-wizard is-company-profile{% endif %} tm-reveal tm-d2">
+      <form class="tm-google-form-card {% if tipo_perfil == 'contratante' %}tm-google-wizard-card tm-company-profile-card{% endif %}" method="post" enctype="multipart/form-data" novalidate>
+        {{ form.hidden_tag() }}
+
+        {% if tipo_perfil == 'contratante' %}
+          <ol class="tm-google-stepper tm-company-stepper" aria-label="Etapas do perfil do contratante">
+            <li class="is-active" data-step-indicator="1">
+              <span>1</span>
+              <strong>Dados da empresa</strong>
+            </li>
+            <li data-step-indicator="2">
+              <span>2</span>
+              <strong>Detalhes do contratante</strong>
+            </li>
+            <li data-step-indicator="3">
+              <span>3</span>
+              <strong>Confirmação</strong>
+            </li>
+          </ol>
+
+          <div class="tm-company-profile-layout">
+            <div class="tm-company-form-panel">
+              <div class="tm-google-wizard-step is-active" data-wizard-step="1">
+                <div class="tm-company-first-step">
+                  <div class="tm-company-upload-column">
+                    <div class="field">
+                      {{ form.logo_empresa.label(class='label') }}
+                      <label class="tm-google-upload tm-company-upload" for="{{ form.logo_empresa.id }}">
+                        <span class="tm-google-upload-preview" id="logo-preview">
+                          {% if perfil and perfil.logo_empresa %}
+                            <img src="{{ url_for('auth.logo_empresa', nome_arquivo=perfil.logo_empresa.rsplit('/', 1)[-1]) }}" alt="Logo atual">
+                          {% else %}
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>
+                            </svg>
+                          {% endif %}
+                        </span>
+                        <strong id="logo-file-name">{% if perfil and perfil.logo_empresa %}Logo salva — clique para trocar{% else %}Arraste sua logo aqui{% endif %}</strong>
+                        <span>ou clique para selecionar</span>
+                        <small>PNG, JPG ou JPEG · Máx. 2MB</small>
+                        <span class="button tm-btn-outline is-small">Selecionar arquivo</span>
+                        {{ form.logo_empresa(class='tm-google-file-input', accept='.png,.jpg,.jpeg') }}
+                      </label>
+                      {% for error in form.logo_empresa.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="tm-company-tip">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                      </svg>
+                      <span>Dica: Use uma imagem quadrada para melhor visualização.</span>
+                    </div>
+                  </div>
+
+                  <div class="tm-company-fields-column">
+                    <div class="tm-company-name-region-row">
+                      <div class="field">
+                        {{ form.nome_empresa.label(class='label') }}
+                        {{ form.nome_empresa(class='input', placeholder='Ex: Construções XYZ Ltda.', data_preview='company-name', required=True) }}
+                        {% for error in form.nome_empresa.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                      </div>
+
+                      <div class="field">
+                        {{ form.regiao.label(class='label') }}
+                        <div class="tm-region-autocomplete">
+                          {{ form.regiao(class='input tm-region-input', autocomplete='off', placeholder='Selecione a região', data_preview='company-region', required=True) }}
+                          <div class="tm-autocomplete-list"></div>
+                        </div>
+                        {% for error in form.regiao.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      {{ form.areas_atuacao(id='areas_atuacao', data_preview='company-areas') }}
+                      <label class="label">Área de atuação</label>
+                      <p class="tm-field-hint">Selecione até 3 áreas que melhor representam sua empresa</p>
+                      <div class="tm-selected-areas-bar" aria-live="polite">
+                        <span class="tm-selected-areas-label">Selecionadas</span>
+                        <div class="tm-selected-areas-list" id="selected-areas-list">
+                          <span class="tm-selected-areas-empty">Nenhuma área selecionada</span>
+                        </div>
+                      </div>
+                      <div class="tm-company-area-grid" data-area-picker>
+                        {% for area in areas_atuacao_predefinidas %}
+                          <button type="button" class="tm-company-area-option is-tone-{{ loop.index }}" data-area="{{ area }}">
+                            <span class="tm-area-icon" aria-hidden="true">
+                              {% if area == 'Construção Civil' %}
+                                <svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6 20V8l6-3 6 3v12"/><path d="M9 13h2"/><path d="M13 13h2"/></svg>
+                              {% elif area == 'Limpeza' %}
+                                <svg viewBox="0 0 24 24"><path d="M14 4l6 6"/><path d="M5 20l9-9"/><path d="M13 5l6 6-4 4-6-6z"/></svg>
+                              {% elif area == 'Logística' %}
+                                <svg viewBox="0 0 24 24"><path d="M3 7h11v10H3z"/><path d="M14 11h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+                              {% elif area == 'Comércio' %}
+                                <svg viewBox="0 0 24 24"><path d="M6 8h15l-2 8H8z"/><path d="M6 8 5 4H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+                              {% elif area == 'Tecnologia' %}
+                                <svg viewBox="0 0 24 24"><path d="m8 9-4 3 4 3"/><path d="m16 9 4 3-4 3"/><path d="m14 5-4 14"/></svg>
+                              {% else %}
+                                <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M9 5V3h6v2"/><path d="M4 11h16"/></svg>
+                              {% endif %}
+                            </span>
+                            <span>{{ area }}</span>
+                            <span class="tm-area-check" aria-hidden="true">✓</span>
+                          </button>
+                        {% endfor %}
+                      </div>
+                      <div class="tm-company-other-area">
+                        <input class="input" id="area-custom-input" type="text" maxlength="40" placeholder="Outra área de atuação">
+                        <button class="button tm-btn-outline is-small tm-area-add-button" type="button" id="area-custom-add">Adicionar</button>
+                      </div>
+                      {% for error in form.areas_atuacao.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tm-google-wizard-step" data-wizard-step="2">
+                <header class="tm-google-card-header">
+                  <span class="tm-google-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <h2>Detalhes do contratante</h2>
+                    <p>Essas informações ajudam candidatos a entenderem o perfil da oportunidade.</p>
+                  </div>
+                </header>
+
+                <div class="tm-contractor-details-grid">
+                  <div class="field tm-contractor-type-field">
+                    <label class="label">{{ form.tipo_contratante.label.text }}</label>
+                    <div class="tm-contractor-type-grid">
+                      {% for value, label in form.tipo_contratante.choices %}
+                        <label class="tm-contractor-type-card">
+                          <input type="radio" name="{{ form.tipo_contratante.name }}" value="{{ value }}" {% if form.tipo_contratante.data == value %}checked{% endif %} required>
+                          <span class="tm-contractor-card-check" aria-hidden="true"></span>
+                          <span class="tm-contractor-card-icon" aria-hidden="true">
+                            {% if value == 'empresa' %}
+                              <svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+                            {% else %}
+                              <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+                            {% endif %}
+                          </span>
+                          <strong>{{ label }}</strong>
+                          <small>
+                            {% if value == 'empresa' %}
+                              Publicar vagas em nome de empresa
+                            {% else %}
+                              Contratações individuais
+                            {% endif %}
+                          </small>
+                        </label>
+                      {% endfor %}
+                    </div>
+                    {% for error in form.tipo_contratante.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                  </div>
+
+                  <div class="field tm-contractor-employees-field">
+                    <label class="label">{{ form.quantidade_funcionarios.label.text }}</label>
+                    <div class="tm-contractor-employee-grid">
+                      {% for value, label in form.quantidade_funcionarios.choices %}
+                        <label class="tm-contractor-employee-option">
+                          <input type="radio" name="{{ form.quantidade_funcionarios.name }}" value="{{ value }}" data-preview="company-employees" data-label="{{ label }} funcionários" {% if form.quantidade_funcionarios.data == value %}checked{% endif %} required>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M4 19a5 5 0 0 1 10 0"/><path d="M17 11a2.5 2.5 0 1 0 0-5"/><path d="M18 14.5a4.5 4.5 0 0 1 3.5 4.5"/></svg>
+                          <span>{{ label }}</span>
+                        </label>
+                      {% endfor %}
+                    </div>
+                    {% for error in form.quantidade_funcionarios.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                  </div>
+
+                  <div class="field tm-contractor-site-field">
+                    {{ form.site.label(class='label') }}
+                    <div class="control has-icons-left">
+                      {{ form.site(class='input', placeholder='https://suaempresa.com.br') }}
+                      <span class="icon is-left">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20"/><path d="M12 2a15.3 15.3 0 0 0 0 20"/></svg>
+                      </span>
+                    </div>
+                    <p class="tm-field-hint">Seu site ou perfil que candidatos podem conhecer mais sobre você.</p>
+                    {% for error in form.site.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+
+                <div class="field tm-contractor-description-field">
+                  {{ form.descricao.label(class='label') }}
+                  {{ form.descricao(class='textarea tm-google-textarea', maxlength='500', placeholder='Conte aos candidatos sobre sua empresa, cultura, missão e o que torna seu lugar especial para trabalhar...', data_preview='company-description', required=True) }}
+                  <p class="help tm-char-counter"><span id="descricao-count">0</span>/500</p>
+                  {% for error in form.descricao.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+
+              <div class="tm-google-wizard-step" data-wizard-step="3">
+                <header class="tm-google-card-header">
+                  <span class="tm-google-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <h2>Confirmação</h2>
+                    <p>Revise as informações abaixo antes de concluir. Você poderá editar depois.</p>
+                  </div>
+                </header>
+
+                <div class="tm-confirmation-grid">
+
+                  <div class="tm-confirmation-main">
+                    <article class="tm-company-ios-preview" aria-label="Prévia pública do perfil da empresa">
+                      <p class="tm-confirmation-preview-label">Como candidatos verão sua empresa</p>
+
+                      <div class="tm-company-public-body">
+                        <div class="tm-company-public-brand">
+                          <div class="tm-company-public-avatar" id="company-public-avatar">
+                            {% if perfil and perfil.logo_empresa %}
+                              <img src="{{ url_for('auth.logo_empresa', nome_arquivo=perfil.logo_empresa.rsplit('/', 1)[-1]) }}" alt="Logo da empresa">
+                            {% else %}
+                              <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>
+                              </svg>
+                            {% endif %}
+                          </div>
+                          <span class="tm-company-public-eyebrow">Perfil público ✓</span>
+                          <h3 id="preview-company-name">Construções XYZ</h3>
+                          <p id="preview-company-region">Vila Velha, ES</p>
+                        </div>
+
+                        <div class="tm-company-public-summary">
+                          <span>Descrição</span>
+                          <p id="preview-company-description">As informações que você preencher aqui aparecerão no perfil público da sua empresa e ajudarão candidatos a te conhecer melhor.</p>
+                        </div>
+                      </div>
+
+                      <dl class="tm-company-public-facts tm-facts-ios">
+                        <div>
+                          <dt>
+                            <span class="tm-fact-icon tm-fact-icon--blue">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20"/><path d="M12 2a15.3 15.3 0 0 0 0 20"/></svg>
+                            </span>
+                            Site
+                          </dt>
+                          <dd id="preview-company-site">suaempresa.com.br</dd>
+                        </div>
+                        <div>
+                          <dt>
+                            <span class="tm-fact-icon tm-fact-icon--purple">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13"/><path d="M13 3l3 6-4 13"/><path d="m2 9h20"/></svg>
+                            </span>
+                            Ramo
+                          </dt>
+                          <dd id="preview-company-areas">Áreas aparecerão aqui</dd>
+                        </div>
+                        <div>
+                          <dt>
+                            <span class="tm-fact-icon tm-fact-icon--orange">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                            </span>
+                            Tipo
+                          </dt>
+                          <dd id="preview-company-type">Empresa</dd>
+                        </div>
+                        <div>
+                          <dt>
+                            <span class="tm-fact-icon tm-fact-icon--green">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </span>
+                            Equipe
+                          </dt>
+                          <dd id="preview-company-employees">1 - 10 funcionários</dd>
+                        </div>
+                      </dl>
+                    </article>
+
+                    <div class="tm-confirmation-success">
+                      <span class="tm-confirmation-success-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </span>
+                      <div>
+                        <strong>Perfil completo!</strong>
+                        <p>Seu perfil está pronto para atrair os melhores talentos.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <aside class="tm-confirmation-sidebar">
+                    <div class="tm-confirmation-tips-card">
+                      <p class="tm-confirmation-tips-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        Dicas para mais visibilidade
+                      </p>
+
+                      <div class="tm-confirmation-tips-list">
+                        <div class="tm-confirmation-tip-item">
+                          <span class="tm-confirmation-tip-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                          </span>
+                          <div>
+                            <strong>Adicione benefícios da empresa</strong>
+                            <p>Vagas com benefícios recebem até 3x mais interesse.</p>
+                          </div>
+                          <span class="tm-confirmation-tip-chevron" aria-hidden="true">›</span>
+                        </div>
+
+                        <div class="tm-confirmation-tip-item">
+                          <span class="tm-confirmation-tip-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                          </span>
+                          <div>
+                            <strong>Publique sua primeira vaga</strong>
+                            <p>Empresas que publicam vagas recebem mais candidaturas.</p>
+                          </div>
+                          <span class="tm-confirmation-tip-chevron" aria-hidden="true">›</span>
+                        </div>
+
+                        <div class="tm-confirmation-tip-item">
+                          <span class="tm-confirmation-tip-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                          </span>
+                          <div>
+                            <strong>Mantenha seu perfil atualizado</strong>
+                            <p>Perfis atualizados transmitem mais confiança aos candidatos.</p>
+                          </div>
+                          <span class="tm-confirmation-tip-chevron" aria-hidden="true">›</span>
+                        </div>
+                      </div>
+
+                      <div class="tm-confirmation-sidebar-actions">
+                        <button type="button" class="button tm-btn-outline" id="tm-confirmation-back">
+                          <span aria-hidden="true">←</span>
+                          Voltar
+                        </button>
+                        <button type="submit" class="button tm-btn-primary is-hidden" data-wizard-submit>
+                          Concluir perfil
+                        </button>
+                      </div>
+                    </div>
+                  </aside>
+
+                </div>
+              </div>
+
+              <div class="tm-google-wizard-actions tm-company-actions">
+                <button type="button" class="button tm-btn-outline" data-wizard-prev disabled>
+                  <span aria-hidden="true">←</span>
+                  Voltar
+                </button>
+                <button type="button" class="button tm-btn-primary" data-wizard-next>
+                  Continuar
+                  <span aria-hidden="true">→</span>
+                </button>
+                <button type="submit" class="button tm-btn-primary is-hidden" data-wizard-submit>Concluir perfil</button>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <header class="tm-google-card-header">
+            <span class="tm-google-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <div>
+              <h2>Informações profissionais</h2>
+              <p>Esses dados ajudam o TrampoMatch a encontrar vagas compatíveis.</p>
+            </div>
+          </header>
+
+          <div class="tm-google-candidate-grid">
+            <div class="field">
+              {{ form.regiao.label(class='label') }}
+              <div class="tm-region-autocomplete">
+                {{ form.regiao(class='input tm-region-input', autocomplete='off', placeholder='Selecione sua região', data_preview='candidate-region') }}
+                <div class="tm-autocomplete-list"></div>
+              </div>
+              {% for error in form.regiao.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="field">
+              {{ form.tipo_trabalho.label(class='label') }}
+              <div class="select is-fullwidth tm-native-select-wrap">
+                {{ form.tipo_trabalho(class='tm-custom-select-native', data_preview='candidate-work') }}
+              </div>
+              {% for error in form.tipo_trabalho.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="field">
+              {{ form.disponibilidade.label(class='label') }}
+              <div class="select is-fullwidth tm-native-select-wrap">
+                {{ form.disponibilidade(class='tm-custom-select-native', data_preview='candidate-availability') }}
+              </div>
+              {% for error in form.disponibilidade.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="field">
+              {{ form.nivel_experiencia.label(class='label') }}
+              <div class="select is-fullwidth tm-native-select-wrap">
+                {{ form.nivel_experiencia(class='tm-custom-select-native', data_preview='candidate-level') }}
+              </div>
+              {% for error in form.nivel_experiencia.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="field is-wide">
+              {{ form.habilidades.label(class='label') }}
+              {{ form.habilidades(class='textarea tm-google-textarea', placeholder='Ex: limpeza, organização, atendimento ao cliente', data_preview='candidate-skills') }}
+              <div class="tm-google-skill-suggestions">
+                {% for habilidade in habilidades_predefinidas[:8] %}
+                  <button type="button" class="tm-pill" data-skill="{{ habilidade }}">{{ habilidade }}</button>
+                {% endfor %}
+              </div>
+              {% for error in form.habilidades.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="field is-wide">
+              {{ form.experiencia_resumida.label(class='label') }}
+              {{ form.experiencia_resumida(class='textarea tm-google-textarea', placeholder='Conte rapidamente onde já trabalhou, atividades feitas ou objetivos profissionais.', data_preview='candidate-experience') }}
+              {% for error in form.experiencia_resumida.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="field is-wide">
+              {{ form.curriculo.label(class='label') }}
+              <div class="file has-name is-fullwidth">
+                <label class="file-label">
+                  {{ form.curriculo(class='file-input', accept='.pdf,.doc,.docx') }}
+                  <span class="file-cta">
+                    <span class="file-label">Escolher currículo</span>
+                  </span>
+                  <span class="file-name">PDF, DOC ou DOCX até 5MB</span>
+                </label>
+              </div>
+              {% for error in form.curriculo.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+          <button type="submit" class="button tm-btn-primary tm-google-save">
+            Salvar perfil
+          </button>
+        {% endif %}
+      </form>
+
+      {% if tipo_perfil != 'contratante' %}
+        <aside class="tm-google-preview-card">
+          <header class="tm-google-card-header">
+            <span class="tm-google-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </span>
+            <div>
+              <h2>Como contratantes verão você</h2>
+              <p>Prévia do seu perfil profissional.</p>
+            </div>
+          </header>
+
+          <div class="tm-google-public-preview">
+            <div class="tm-google-public-avatar" id="public-avatar">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+
+            <h3>{{ nome }}</h3>
+            <p id="preview-candidate-region">Região</p>
+            <hr>
+            <p><strong>Interesse:</strong> <span id="preview-candidate-work">Tipo de trabalho</span></p>
+            <p><strong>Disponibilidade:</strong> <span id="preview-candidate-availability">Disponibilidade</span></p>
+            <p><strong>Nível:</strong> <span id="preview-candidate-level">Experiência</span></p>
+            <p id="preview-candidate-skills">Habilidades aparecerão aqui.</p>
+            <p id="preview-candidate-experience">Resumo profissional aparecerá aqui.</p>
+          </div>
+        </aside>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const regioes = {{ regioes|tojson }};
+    const normalize = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const wizardSteps = Array.from(document.querySelectorAll('[data-wizard-step]'));
+    const indicators = Array.from(document.querySelectorAll('[data-step-indicator]'));
+    const stepSummary = document.getElementById('tm-wizard-summary');
+    const prevButton = document.querySelector('[data-wizard-prev]');
+    const nextButton = document.querySelector('[data-wizard-next]');
+    const submitButton = document.querySelector('[data-wizard-submit]');
+    const actionsDiv = document.querySelector('.tm-google-wizard-actions');
+    let activeStep = 1;
+
+    const showStep = (step) => {
+      activeStep = step;
+
+      wizardSteps.forEach((item) => {
+        item.classList.toggle('is-active', Number(item.dataset.wizardStep) === step);
+      });
+
+      indicators.forEach((item) => {
+        const indicatorStep = Number(item.dataset.stepIndicator);
+        item.classList.toggle('is-active', indicatorStep === step);
+        item.classList.toggle('is-complete', indicatorStep < step);
+      });
+
+      if (stepSummary) stepSummary.textContent = `Etapa ${step} de ${wizardSteps.length} · 2 de 3 etapas concluídas`;
+      if (prevButton) prevButton.disabled = step === 1;
+      if (nextButton) nextButton.classList.toggle('is-hidden', step === wizardSteps.length);
+      if (submitButton) submitButton.classList.toggle('is-hidden', step !== wizardSteps.length);
+      if (actionsDiv) actionsDiv.classList.toggle('is-hidden', step === wizardSteps.length);
+    };
+
+    const validateCurrentStep = () => {
+      const current = document.querySelector(`[data-wizard-step="${activeStep}"]`);
+      if (!current) return true;
+
+      const fields = Array.from(current.querySelectorAll('input[required], textarea[required], select[required]'));
+      for (const field of fields) {
+        if (field.type === 'radio') {
+          const checked = current.querySelector(`input[name="${field.name}"]:checked`);
+          if (!checked) {
+            field.reportValidity();
+            return false;
+          }
+          continue;
+        }
+
+        if (!field.value.trim()) {
+          field.reportValidity();
+          field.focus();
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    if (wizardSteps.length) {
+      showStep(1);
+      nextButton?.addEventListener('click', () => {
+        if (validateCurrentStep() && activeStep < wizardSteps.length) {
+          showStep(activeStep + 1);
+        }
+      });
+      prevButton?.addEventListener('click', () => {
+        if (activeStep > 1) showStep(activeStep - 1);
+      });
+
+      document.querySelectorAll('[data-wizard-goto]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = Number(btn.dataset.wizardGoto);
+          if (target >= 1 && target <= wizardSteps.length) showStep(target);
+        });
+      });
+
+      document.getElementById('tm-confirmation-back')?.addEventListener('click', () => {
+        if (activeStep > 1) showStep(activeStep - 1);
+      });
+    }
+
+    document.querySelectorAll('.tm-region-input').forEach((input) => {
+      const list = input.closest('.tm-region-autocomplete')?.querySelector('.tm-autocomplete-list');
+      if (!list) return;
+
+      input.addEventListener('input', () => {
+        list.innerHTML = '';
+        const query = normalize(input.value.trim());
+        if (!query) return;
+
+        regioes.filter((regiao) => normalize(regiao).includes(query)).slice(0, 6).forEach((regiao) => {
+          const button = document.createElement('button');
+          button.className = 'tm-pill';
+          button.type = 'button';
+          button.textContent = regiao;
+          button.addEventListener('click', () => {
+            input.value = regiao;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            list.innerHTML = '';
+          });
+          list.appendChild(button);
+        });
+      });
+    });
+
+    const bindTextPreview = (selector, targetSelector, fallback) => {
+      const input = document.querySelector(selector);
+      const target = document.querySelector(targetSelector);
+      if (!input || !target) return;
+      const update = () => { target.textContent = input.value.trim() || fallback; };
+      input.addEventListener('input', update);
+      input.addEventListener('change', update);
+      update();
+    };
+
+    bindTextPreview('[data-preview="company-name"]', '#preview-company-name', 'Construções XYZ');
+    bindTextPreview('[data-preview="company-region"]', '#preview-company-region', 'Vila Velha, ES');
+    bindTextPreview('[data-preview="company-description"]', '#preview-company-description', 'As informações que você preencher aqui aparecerão no perfil público da sua empresa e ajudarão candidatos a te conhecer melhor.');
+    bindTextPreview('[name="site"]', '#preview-company-site', 'Site ou rede social não informado');
+    bindTextPreview('[data-preview="candidate-region"]', '#preview-candidate-region', 'Região');
+    bindTextPreview('[data-preview="candidate-skills"]', '#preview-candidate-skills', 'Habilidades aparecerão aqui.');
+    bindTextPreview('[data-preview="candidate-experience"]', '#preview-candidate-experience', 'Resumo profissional aparecerá aqui.');
+
+    document.querySelectorAll('select[data-preview]').forEach((select) => {
+      const target = document.getElementById(`preview-${select.dataset.preview.replace(/_/g, '-')}`);
+      const update = () => {
+        const selected = select.selectedOptions[0];
+        if (target && selected) target.textContent = selected.textContent || target.textContent;
+      };
+      select.addEventListener('change', update);
+      update();
+    });
+
+    const employeesTarget = document.getElementById('preview-company-employees');
+    document.querySelectorAll('input[data-preview="company-employees"]').forEach((radio) => {
+      const update = () => {
+        const checked = document.querySelector('input[data-preview="company-employees"]:checked');
+        if (employeesTarget && checked) employeesTarget.textContent = checked.dataset.label || checked.value;
+      };
+      radio.addEventListener('change', update);
+      update();
+    });
+
+    const typeTarget = document.getElementById('preview-company-type');
+    document.querySelectorAll('input[name="tipo_contratante"]').forEach((radio) => {
+      const update = () => {
+        const checked = document.querySelector('input[name="tipo_contratante"]:checked');
+        if (!typeTarget || !checked) return;
+        const card = checked.closest('.tm-contractor-type-card');
+        typeTarget.textContent = card?.querySelector('strong')?.textContent.trim() || checked.value;
+      };
+      radio.addEventListener('change', update);
+      update();
+    });
+
+    const description = document.querySelector('[data-preview="company-description"]');
+    const counter = document.getElementById('descricao-count');
+    if (description && counter) {
+      const updateCounter = () => { counter.textContent = description.value.length; };
+      description.addEventListener('input', updateCounter);
+      updateCounter();
+    }
+
+    const logoInput = document.getElementById('{{ form.logo_empresa.id if tipo_perfil == "contratante" else "" }}');
+    if (logoInput) {
+      const preview = document.getElementById('logo-preview');
+      const publicAvatar = document.getElementById('public-avatar');
+      const companyPublicAvatar = document.getElementById('company-public-avatar');
+      const fileName = document.getElementById('logo-file-name');
+      const upload = logoInput.closest('.tm-google-upload');
+      const handleFile = () => {
+        const file = logoInput.files && logoInput.files[0];
+        if (!file) return;
+        if (fileName) fileName.textContent = file.name;
+        const url = URL.createObjectURL(file);
+        const img = `<img src="${url}" alt="">`;
+        if (preview) preview.innerHTML = img;
+        if (publicAvatar) publicAvatar.innerHTML = img;
+        if (companyPublicAvatar) companyPublicAvatar.innerHTML = img;
+      };
+
+      logoInput.addEventListener('change', handleFile);
+      if (upload) {
+        ['dragenter', 'dragover'].forEach((eventName) => {
+          upload.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            upload.classList.add('is-dragging');
+          });
+        });
+        ['dragleave', 'drop'].forEach((eventName) => {
+          upload.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            upload.classList.remove('is-dragging');
+          });
+        });
+        upload.addEventListener('drop', (event) => {
+          const file = event.dataTransfer?.files?.[0];
+          if (!file) return;
+          const transfer = new DataTransfer();
+          transfer.items.add(file);
+          logoInput.files = transfer.files;
+          handleFile();
+        });
+      }
+    }
+
+    const areaInput = document.getElementById('areas_atuacao');
+    const areaButtons = Array.from(document.querySelectorAll('[data-area]'));
+    const customAreaInput = document.getElementById('area-custom-input');
+    const customAreaAdd = document.getElementById('area-custom-add');
+    const selectedAreasList = document.getElementById('selected-areas-list');
+    const companyAreasPreview = document.getElementById('preview-company-areas');
+
+    const getAreas = () => (areaInput?.value || '').split(',').map((item) => item.trim()).filter(Boolean);
+    const renderSelectedAreas = (areas) => {
+      if (!selectedAreasList) return;
+      selectedAreasList.innerHTML = '';
+      if (!areas.length) {
+        const empty = document.createElement('span');
+        empty.className = 'tm-selected-areas-empty';
+        empty.textContent = 'Nenhuma área selecionada';
+        selectedAreasList.appendChild(empty);
+        return;
+      }
+
+      areas.forEach((area) => {
+        const chip = document.createElement('button');
+        chip.className = 'tm-selected-area-chip';
+        chip.type = 'button';
+        chip.dataset.removeArea = area;
+        chip.innerHTML = `<span></span><strong aria-hidden="true">×</strong>`;
+        chip.querySelector('span').textContent = area;
+        chip.setAttribute('aria-label', `Remover ${area}`);
+        selectedAreasList.appendChild(chip);
+      });
+    };
+
+    const setAreas = (areas) => {
+      const unique = [];
+      areas.forEach((area) => {
+        if (area && !unique.some((item) => item.toLowerCase() === area.toLowerCase())) unique.push(area);
+      });
+      const limited = unique.slice(0, 3);
+      if (areaInput) areaInput.value = limited.join(', ');
+      areaButtons.forEach((button) => button.classList.toggle('is-selected', limited.includes(button.dataset.area)));
+      renderSelectedAreas(limited);
+      if (companyAreasPreview) companyAreasPreview.textContent = limited.join(' · ') || 'Áreas aparecerão aqui';
+    };
+
+    areaButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const current = getAreas();
+        const exists = current.includes(button.dataset.area);
+        setAreas(exists ? current.filter((area) => area !== button.dataset.area) : [...current, button.dataset.area]);
+      });
+    });
+
+    customAreaAdd?.addEventListener('click', () => {
+      const area = customAreaInput.value.trim();
+      if (!area) return;
+      setAreas([...getAreas(), area]);
+      customAreaInput.value = '';
+    });
+
+    customAreaInput?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        customAreaAdd?.click();
+      }
+    });
+
+    selectedAreasList?.addEventListener('click', (event) => {
+      const removeButton = event.target.closest('[data-remove-area]');
+      if (!removeButton) return;
+      setAreas(getAreas().filter((area) => area !== removeButton.dataset.removeArea));
+    });
+
+    if (areaInput) setAreas(getAreas());
+
+    const skills = document.querySelector('[data-preview="candidate-skills"]');
+    document.querySelectorAll('[data-skill]').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!skills) return;
+        const current = skills.value.split(',').map((item) => item.trim()).filter(Boolean);
+        if (!current.includes(button.dataset.skill)) current.push(button.dataset.skill);
+        skills.value = current.join(', ');
+        skills.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+<nav class="navbar tm-navbar" role="navigation" aria-label="navegação principal">
+  <div class="container">
+    <div class="navbar-brand">
+      <a class="navbar-item tm-logo" href="{% if current_user.is_authenticated %}{% if current_user.eh_candidato %}{{ url_for('candidato.dashboard') }}{% else %}{{ url_for('contratante.dashboard') }}{% endif %}{% else %}{{ url_for('main.index') }}{% endif %}">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="11" cy="10" r="5" fill="#2563EB"/>
+          <circle cx="21" cy="10" r="5" fill="#2563EB" opacity="0.55"/>
+          <path d="M3 29c0-4.418 3.582-8 8-8h10c4.418 0 8 3.582 8 8" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <span class="tm-logo-text">TrampoMatch</span>
+      </a>
+      <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div id="navbarMenu" class="navbar-menu">
+      <div class="navbar-start">
+        {% if current_user.is_authenticated %}
+          {% if current_user.eh_candidato %}
+            <a class="navbar-item tm-nav-item {% if request.endpoint == 'candidato.dashboard' %}is-active{% endif %}" href="{{ url_for('candidato.dashboard') }}">Início</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint and request.endpoint.startswith('vagas.') %}is-active{% endif %}" href="{{ url_for('vagas.listagem') }}">Vagas</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint in ['candidato.convites', 'candidato.aceitar_convite', 'candidato.recusar_convite'] %}is-active{% endif %}" href="{{ url_for('candidato.convites') }}">Convites</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint == 'candidato.minhas_vagas' %}is-active{% endif %}" href="{{ url_for('candidato.minhas_vagas') }}">Minhas vagas</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint == 'candidato.matches' %}is-active{% endif %}" href="{{ url_for('candidato.matches') }}">Matches</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint == 'candidato.perfil' %}is-active{% endif %}" href="{{ url_for('candidato.perfil') }}">Perfil</a>
+          {% else %}
+            <a class="navbar-item tm-nav-item {% if request.endpoint == 'contratante.dashboard' %}is-active{% endif %}" href="{{ url_for('contratante.dashboard') }}">Início</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint in ['contratante.candidatos', 'contratante.interesse_candidato', 'contratante.descartar_candidato'] %}is-active{% endif %}" href="{{ url_for('contratante.candidatos') }}">Candidatos</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint in ['contratante.candidatos_respondidos', 'contratante.remover_interesse_candidato', 'contratante.restaurar_candidato'] %}is-active{% endif %}" href="{{ url_for('contratante.candidatos_respondidos') }}">Curtidos</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint in ['contratante.minhas_vagas', 'contratante.nova_vaga', 'contratante.editar_vaga', 'contratante.interessados', 'contratante.aceitar_interessado', 'contratante.recusar_interessado'] %}is-active{% endif %}" href="{{ url_for('contratante.minhas_vagas') }}">Minhas vagas</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint == 'contratante.matches' %}is-active{% endif %}" href="{{ url_for('contratante.matches') }}">Matches</a>
+            <a class="navbar-item tm-nav-item {% if request.endpoint == 'contratante.perfil' %}is-active{% endif %}" href="{{ url_for('contratante.perfil') }}">Perfil</a>
+          {% endif %}
+        {% else %}
+          <a class="navbar-item" href="{{ url_for('main.index') }}">Início</a>
+          <a class="navbar-item" href="{{ url_for('main.index') }}#como-funciona">Como funciona</a>
+          <a class="navbar-item" href="{{ url_for('main.index') }}#demo">Ver na prática</a>
+          <a class="navbar-item" href="{{ url_for('main.index') }}#compatibilidade">Compatibilidade</a>
+        {% endif %}
+      </div>
+      <div class="navbar-end">
+        <div class="navbar-item">
+          <div class="buttons">
+            {% if current_user.is_authenticated %}
+              <a class="button is-light" href="{{ url_for('auth.logout') }}">Sair</a>
+            {% else %}
+              <a class="button tm-btn-outline" href="{{ url_for('auth.login') }}">Entrar</a>
+              <a class="button tm-btn-primary" href="{{ url_for('auth.cadastro') }}">Cadastre-se</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

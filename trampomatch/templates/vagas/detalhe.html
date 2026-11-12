@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ vaga.titulo }} — TrampoMatch{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section">
+  <div class="container tm-narrow">
+    <div class="tm-form-card tm-reveal tm-reveal--scale">
+      <div class="tm-card-title-row">
+        <h1 class="tm-section-title">{{ vaga.titulo }}</h1>
+        {% if compatibilidade is not none %}<span class="tm-badge">{{ compatibilidade }}%</span>{% endif %}
+      </div>
+      <p class="tm-section-subtitle">{{ vaga.regiao }} • {{ vaga.tipo_vaga }} • {{ vaga.status }}</p>
+      <div class="tm-card-complexity"><span>Nível da vaga</span><strong>{{ vaga.complexidade_rotulo }}</strong></div>
+      <p>{{ vaga.descricao }}</p>
+      <p class="tm-card-skills">{{ vaga.habilidades_desejadas }}</p>
+      {% if vaga.valor_min or vaga.valor_max %}
+        <p class="tm-card-value">R$ {{ vaga.valor_min or 0 }}{% if vaga.valor_max %} a R$ {{ vaga.valor_max }}{% endif %}</p>
+      {% endif %}
+      {% if current_user.eh_candidato %}
+        {% if candidatura_bloqueada %}
+          <p class="help mt-4" style="color: var(--text-muted); text-align: center;">
+            Você não pode se candidatar novamente a esta vaga.
+          </p>
+        {% elif tem_interesse %}
+          <form method="post" action="{{ url_for('vagas.remover_interesse', id=vaga.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button is-warning is-fullwidth mt-4" type="submit">Remover interesse</button>
+          </form>
+        {% else %}
+          <form method="post" action="{{ url_for('vagas.demonstrar_interesse', id=vaga.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button tm-btn-primary is-fullwidth mt-4" type="submit">Tenho interesse</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

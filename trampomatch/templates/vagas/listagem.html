@@ -1,0 +1,827 @@
+{% extends 'base.html' %}
+{% from '_form_helpers.html' import render_field %}
+
+{% block title %}Vagas — TrampoMatch{% endblock %}
+{% block body_class %}tm-discovery-body{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section tm-discovery-page tm-vagas-listagem-page">
+  <div class="tm-discovery-layout">
+    <button type="button" class="button tm-btn-outline tm-discovery-filter-toggle" id="btn-toggle-filtros" aria-expanded="false" aria-controls="painel-filtros">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M4 7h16"/><path d="M7 12h10"/><path d="M10 17h4"/>
+      </svg>
+      <span>Filtros</span>
+    </button>
+    <aside id="painel-filtros" class="tm-discovery-filters tm-reveal tm-reveal--left" data-filter-panel>
+      <div class="tm-discovery-panel-head">
+        <div class="tm-discovery-panel-title">
+          <span class="tm-discovery-mini-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M7 12h10"/><path d="M10 17h4"/></svg>
+          </span>
+          <strong>Filtros</strong>
+        </div>
+      </div>
+
+      <form method="get" class="tm-discovery-filter-form">
+        <input type="hidden" name="ordenar" value="{{ ordenar }}">
+
+        <div class="field">
+          <label class="label">Categoria</label>
+          <input type="hidden" id="filtro-categoria-input" name="categoria" value="{{ categoria_ativa }}">
+          <button type="button" class="tm-filter-cat-trigger" id="btn-open-cat-modal" aria-haspopup="dialog">
+            <span id="filtro-cat-label">{{ categoria_ativa_label if categoria_ativa_label else 'Todas as categorias' }}</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
+        <div class="field">
+          <label class="label" for="regiao">Região</label>
+          <div class="tm-location-row">
+            <div class="control tm-location-input">
+              <input class="input" type="text" id="regiao" name="regiao"
+                value="{{ request.args.get('regiao', '') }}" autocomplete="off"
+                placeholder="Digite ou detecte sua região">
+            </div>
+            <button class="button tm-btn-outline tm-loc-btn-sm" id="filtro-usar-localizacao" type="button" title="Usar minha localização">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="tm-autocomplete-list" id="filtro-regiao-sugestoes"></div>
+        </div>
+
+        {{ render_field(form.tipo_vaga) }}
+        {{ render_field(form.complexidade) }}
+        {{ render_field(form.status) }}
+
+        <button class="button tm-btn-primary is-fullwidth" type="submit">
+          <span class="icon is-small" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          </span>
+          <span>Aplicar filtros</span>
+        </button>
+        <a href="{{ url_for('vagas.listagem', regiao='') }}" class="button tm-discovery-clear is-fullwidth">
+          <span class="icon is-small" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </span>
+          <span>Limpar filtros</span>
+        </a>
+      </form>
+
+      <div class="tm-discovery-tip">
+        <span class="tm-discovery-tip-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+        </span>
+        <div>
+          <strong>Dica</strong>
+          <p>Quanto mais filtros você usar, mais precisas serão as vagas recomendadas.</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="tm-discovery-main tm-reveal tm-d2">
+      <div class="tm-discovery-main-head">
+        <div>
+          <h1 class="tm-section-title">Descobrir vagas</h1>
+          <p class="tm-section-subtitle">Encontre oportunidades que combinam com o seu perfil.</p>
+          <p class="tm-section-subtitle">Deslize para a direita para curtir, ou para a esquerda para descartar.</p>
+          {% if categoria_ativa_label %}
+          <span class="tm-discovery-category-badge">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+            {{ categoria_ativa_label }}
+            <a href="{{ url_for('vagas.listagem', categoria='', regiao=request.args.get('regiao',''), tipo_vaga=request.args.get('tipo_vaga',''), complexidade=request.args.get('complexidade',''), ordenar=ordenar) }}" class="tm-discovery-category-clear" title="Ver todas as categorias" aria-label="Remover filtro de categoria">✕</a>
+          </span>
+          {% endif %}
+          <span class="tm-discovery-count">{{ vagas|length }} {{ 'vaga encontrada' if vagas|length == 1 else 'vagas encontradas' }}</span>
+        </div>
+
+        <form method="get" class="tm-discovery-order">
+          <input type="hidden" name="regiao" value="{{ request.args.get('regiao', '') }}">
+          <input type="hidden" name="categoria" value="{{ categoria_ativa }}">
+          <input type="hidden" name="tipo_vaga" value="{{ request.args.get('tipo_vaga', '') }}">
+          <input type="hidden" name="complexidade" value="{{ request.args.get('complexidade', '') }}">
+          <input type="hidden" name="status" value="{{ request.args.get('status', '') }}">
+          <label class="label" for="ordenar">Ordenar por</label>
+          <div class="select is-fullwidth tm-native-select-wrap">
+            <select id="ordenar" name="ordenar" class="tm-custom-select-native" onchange="this.form.submit()">
+              <option value="compatibilidade" {% if ordenar == 'compatibilidade' %}selected{% endif %}>Mais compatíveis</option>
+              <option value="recentes" {% if ordenar == 'recentes' %}selected{% endif %}>Mais recentes</option>
+            </select>
+          </div>
+        </form>
+      </div>
+
+      <div class="tm-swipe-shell tm-discovery-deck">
+        <div class="tm-swipe-feedback" data-swipe-feedback aria-hidden="true">
+          <span data-swipe-feedback-text></span>
+        </div>
+        {% for item in vagas %}
+          {% set vaga = item.vaga %}
+          {% set skills = vaga.habilidades_lista() %}
+          {% set emp = vaga.contratante.perfil_contratante %}
+          <article
+            class="tm-swipe-card tm-discovery-card {% if loop.first %}is-active{% endif %}"
+            data-swipe-card
+            data-title="{{ vaga.titulo|e }}"
+            data-region="{{ vaga.regiao|e }}"
+            data-type="{{ vaga.tipo_vaga|e }}"
+            data-status="{{ vaga.status|e }}"
+            data-description="{{ vaga.descricao|e }}"
+            data-level="{{ vaga.complexidade_rotulo|e }}"
+            data-level-description="{{ vaga.complexidade_descricao|e }}"
+            data-skills="{{ skills|tojson|forceescape }}"
+            data-match="{{ item.compatibilidade if item.compatibilidade is not none else '' }}"
+            data-match-result="{{ (item.resultado_match or {})|tojson|forceescape }}"
+            data-payment="{% if vaga.valor_min or vaga.valor_max %}R$ {{ '%.2f'|format(vaga.valor_min or 0)|replace('.', ',') }}{% if vaga.valor_max %} a R$ {{ '%.2f'|format(vaga.valor_max)|replace('.', ',') }}{% endif %}{% else %}A combinar{% endif %}"
+            data-company-name="{{ (emp.nome_empresa if emp and emp.nome_empresa else vaga.contratante.nome)|e }}"
+            data-company-type="{{ (emp.tipo_contratante if emp and emp.tipo_contratante else '')|e }}"
+            data-company-region="{{ (emp.regiao if emp and emp.regiao else '')|e }}"
+            data-company-desc="{{ (emp.descricao if emp and emp.descricao else '')|e }}"
+            data-company-areas="{{ (emp.areas_atuacao if emp and emp.areas_atuacao else '')|e }}"
+            data-company-employees="{{ (emp.quantidade_funcionarios if emp and emp.quantidade_funcionarios else '')|e }}"
+            data-company-site="{{ (emp.site if emp and emp.site else '')|e }}"
+          >
+            <div class="tm-swipe-stamp tm-swipe-stamp-like">Tenho interesse</div>
+            <div class="tm-swipe-stamp tm-swipe-stamp-skip">Não tenho interesse</div>
+
+            <div class="tm-swipe-card-inner">
+              <div class="tm-swipe-card-top">
+                {% if item.compatibilidade is not none %}
+                  <span class="tm-swipe-match-badge">{{ item.compatibilidade }}% Match</span>
+                {% else %}
+                  <span></span>
+                {% endif %}
+                <span class="tm-swipe-status-badge">
+                  <span class="tm-swipe-status-dot"></span>
+                  Vaga {{ vaga.status }}
+                </span>
+              </div>
+
+              <div class="tm-swipe-card-hero">
+                <div class="tm-swipe-card-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+                </div>
+                <div class="tm-swipe-card-hero-text">
+                  <h2 class="tm-swipe-title">{{ vaga.titulo }}</h2>
+                  <div class="tm-swipe-meta">
+                    <span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                      {{ vaga.regiao }}
+                    </span>
+                    <span class="tm-swipe-meta-sep">•</span>
+                    <span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                      {{ vaga.tipo_vaga }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="tm-card-desc tm-swipe-desc">{{ vaga.descricao }}</p>
+
+              <div class="tm-swipe-info-grid">
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--orange" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Nível da vaga</span>
+                  <strong class="tm-swipe-info-value">{{ vaga.complexidade_rotulo }}</strong>
+                </div>
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--green" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Pagamento</span>
+                  <strong class="tm-swipe-info-value">
+                    {% if vaga.valor_min or vaga.valor_max %}
+                      R$ {{ "%.2f"|format(vaga.valor_min or 0)|replace('.', ',') }}{% if vaga.valor_max %} a R$ {{ "%.2f"|format(vaga.valor_max)|replace('.', ',') }}{% endif %}
+                    {% else %}
+                      A combinar
+                    {% endif %}
+                  </strong>
+                </div>
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--purple" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Tipo de trabalho</span>
+                  <strong class="tm-swipe-info-value">{{ vaga.tipo_vaga }}</strong>
+                </div>
+              </div>
+
+              {% if skills %}
+                <div class="tm-swipe-skills">
+                  <span class="tm-swipe-skills-label">Habilidades desejadas</span>
+                  <div class="tm-swipe-chips">
+                    {% for skill in skills[:4] %}
+                      <span class="tm-swipe-chip">{{ skill|capitalize }}</span>
+                    {% endfor %}
+                    {% if skills|length > 4 %}
+                      <span class="tm-swipe-chip tm-swipe-chip--more">+{{ skills|length - 4 }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+
+              <div class="tm-swipe-actions">
+                {% if current_user.eh_candidato %}
+                  <form method="post" action="{{ url_for('vagas.descartar', id=vaga.id) }}" data-swipe-action="skip">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="button tm-swipe-btn tm-swipe-btn-skip" type="submit" aria-label="Não gostei desta vaga">×</button>
+                  </form>
+                {% endif %}
+
+                <button class="button tm-swipe-btn tm-swipe-btn-detail" type="button" data-focus-details>
+                  <span class="icon is-small" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  </span>
+                  <span>Ver detalhes</span>
+                </button>
+
+                {% if current_user.eh_candidato %}
+                  <form method="post" action="{{ url_for('vagas.demonstrar_interesse', id=vaga.id) }}" data-swipe-action="like">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="button tm-swipe-btn tm-swipe-btn-like" type="submit" aria-label="Tenho interesse nesta vaga">
+                      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l7.78-8.84a5.5 5.5 0 0 0 1.06-7.78z"/></svg>
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+        {% else %}
+          <div class="tm-swipe-empty" data-swipe-empty>
+            <h2>Nenhuma nova vaga encontrada</h2>
+            <p>Nenhuma nova vaga encontrada para os filtros atuais.</p>
+          </div>
+        {% endfor %}
+
+        {% if vagas %}
+          <div class="tm-swipe-empty is-hidden" data-swipe-empty>
+            <h2>Nenhuma nova vaga encontrada</h2>
+            <p>Você já avaliou todas as vagas disponíveis para os filtros atuais.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if vagas %}
+        <div class="tm-discovery-nav">
+          <button class="button tm-discovery-arrow" type="button" data-card-prev aria-label="Vaga anterior">‹</button>
+          <p class="tm-swipe-counter" data-swipe-counter>1 de {{ vagas|length }} vagas</p>
+          <button class="button tm-discovery-arrow" type="button" data-card-next aria-label="Próxima vaga">›</button>
+        </div>
+      {% endif %}
+    </main>
+
+    <aside class="tm-discovery-details" data-details-panel tabindex="-1">
+      <div class="tm-details-card">
+        <div class="tm-details-head">
+          <h2>Detalhes da vaga</h2>
+        </div>
+
+        <div class="tm-details-empty {% if vagas %}is-hidden{% endif %}" data-details-empty>
+          <h3>Nenhuma vaga selecionada</h3>
+          <p>Use os filtros ou aguarde novas oportunidades para ver os detalhes aqui.</p>
+        </div>
+
+        <div class="tm-details-content {% if not vagas %}is-hidden{% endif %}" data-details-content>
+          <div class="tm-details-hero">
+            <div class="tm-details-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+            </div>
+            <div class="tm-details-title-group">
+              <div class="tm-details-title-row">
+                <h3 data-details-title></h3>
+                <span class="tm-swipe-match-badge" data-details-match></span>
+              </div>
+              <div class="tm-swipe-meta tm-details-meta">
+                <span data-details-region></span>
+                <span data-details-type></span>
+                <span><span class="tm-swipe-status-dot"></span><span data-details-status></span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tm-details-section">
+            <h4>Descrição</h4>
+            <p data-details-description></p>
+          </div>
+
+          <div class="tm-details-info-list">
+            <div class="tm-details-info-box">
+              <span class="tm-swipe-info-icon tm-swipe-info-icon--orange" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+              </span>
+              <div>
+                <span>Nível da vaga</span>
+                <strong data-details-level></strong>
+                <p data-details-level-description></p>
+              </div>
+            </div>
+            <div class="tm-details-info-box">
+              <span class="tm-swipe-info-icon tm-swipe-info-icon--green" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+              </span>
+              <div>
+                <span>Pagamento</span>
+                <strong data-details-payment></strong>
+              </div>
+            </div>
+            <div class="tm-details-info-box">
+              <span class="tm-swipe-info-icon tm-swipe-info-icon--purple" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              <div>
+                <span>Tipo de trabalho</span>
+                <strong data-details-work-type></strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="tm-details-section">
+            <h4>Habilidades desejadas</h4>
+            <div class="tm-swipe-chips" data-details-skills></div>
+          </div>
+
+          <div class="tm-details-match-summary" data-details-summary-wrap>
+            <strong>Por que esse match?</strong>
+            <p data-details-summary></p>
+          </div>
+
+          <div class="tm-details-company" data-details-company-wrap>
+            <h4 class="tm-details-company-title">Sobre a empresa</h4>
+            <div class="tm-details-company-hero">
+              <div class="tm-details-company-avatar" data-details-company-avatar></div>
+              <div>
+                <strong class="tm-details-company-name" data-details-company-name></strong>
+                <p class="tm-details-company-meta" data-details-company-meta></p>
+              </div>
+            </div>
+            <p class="tm-details-company-desc" data-details-company-desc></p>
+            <div class="tm-details-info-list tm-details-company-info" data-details-company-info></div>
+          </div>
+
+          {% if current_user.eh_candidato %}
+            <div class="tm-details-interest">
+              <h4>Tem interesse nesta vaga?</h4>
+              <p>Sua resposta será enviada com segurança.</p>
+              <div class="tm-details-actions">
+                <button class="button tm-details-skip" type="button" data-panel-action="skip">Não tenho interesse</button>
+                <button class="button tm-btn-primary" type="button" data-panel-action="like">Tenho interesse</button>
+              </div>
+              <p class="tm-details-safe">Seus dados estão protegidos e não serão compartilhados sem necessidade.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+{# ── Modal de seleção de categoria ── #}
+<div class="modal tm-cat-modal" id="modal-categoria" role="dialog" aria-modal="true" aria-labelledby="cat-modal-title">
+  <div class="modal-background tm-cat-modal-bg"></div>
+  <div class="tm-cat-modal-card">
+    <div class="tm-cat-modal-handle"></div>
+    <div class="tm-cat-modal-header">
+      <h2 class="tm-cat-modal-title" id="cat-modal-title">Categoria de trabalho</h2>
+      <button type="button" class="tm-cat-modal-close" id="btn-close-cat-modal" aria-label="Fechar">✕</button>
+    </div>
+    <div class="tm-filter-cat-list" id="filtro-cat-list">
+      <button type="button" class="tm-filter-cat-item{% if not categoria_ativa %} is-selected{% endif %}" data-cat-value="" data-cat-label="Todas as categorias">
+        <span>Todas as categorias</span>
+        <svg class="tm-filter-cat-check" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      {% for slug, label in categorias %}
+      <button type="button" class="tm-filter-cat-item{% if categoria_ativa == slug %} is-selected{% endif %}" data-cat-value="{{ slug }}" data-cat-label="{{ label }}">
+        <span>{{ label }}</span>
+        <svg class="tm-filter-cat-check" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const _regioes = {{ regioes|tojson }};
+    const _coordenadas = {{ coordenadas_regioes|tojson }};
+    const filtroInput = document.getElementById('regiao');
+    const filtroSugestoes = document.getElementById('filtro-regiao-sugestoes');
+    const filtroLocBtn = document.getElementById('filtro-usar-localizacao');
+
+    if (filtroInput && filtroSugestoes) {
+      const normalize = (v) => v.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+      const distance = (a, b) => {
+        const d = a.lat - b.lat, e = a.lng - b.lng;
+        return Math.sqrt(d * d + e * e);
+      };
+
+      const closestRegion = (coords) =>
+        Object.entries(_coordenadas)
+          .map(([name, pt]) => ({ name, d: distance({ lat: coords.latitude, lng: coords.longitude }, pt) }))
+          .sort((a, b) => a.d - b.d)[0].name;
+
+      filtroInput.addEventListener('input', () => {
+        filtroSugestoes.innerHTML = '';
+        const q = normalize(filtroInput.value.trim());
+        if (!q) return;
+        _regioes.filter((r) => normalize(r).includes(q)).slice(0, 6).forEach((r) => {
+          const btn = document.createElement('button');
+          btn.className = 'tm-pill'; btn.type = 'button'; btn.textContent = r;
+          btn.addEventListener('click', () => { filtroInput.value = r; filtroSugestoes.innerHTML = ''; });
+          filtroSugestoes.appendChild(btn);
+        });
+      });
+
+      filtroLocBtn?.addEventListener('click', () => {
+        if (!navigator.geolocation) return;
+        filtroLocBtn.disabled = true;
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            filtroInput.value = closestRegion(pos.coords);
+            filtroSugestoes.innerHTML = '';
+            filtroLocBtn.disabled = false;
+          },
+          () => { filtroLocBtn.disabled = false; },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+        );
+      });
+    }
+  });
+</script>
+<script>
+  (function () {
+    const btn   = document.getElementById('btn-toggle-filtros');
+    const panel = document.getElementById('painel-filtros');
+    if (!btn || !panel) return;
+    btn.addEventListener('click', () => {
+      const open = panel.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', open);
+      btn.querySelector('span').textContent = open ? 'Fechar filtros' : 'Filtros';
+    });
+  })();
+</script>
+<script>
+  (function () {
+    const modal   = document.getElementById('modal-categoria');
+    const trigger = document.getElementById('btn-open-cat-modal');
+    const label   = document.getElementById('filtro-cat-label');
+    const hidden  = document.getElementById('filtro-categoria-input');
+    const items   = document.querySelectorAll('#filtro-cat-list .tm-filter-cat-item');
+
+    function abrirModal() {
+      modal.classList.add('is-active');
+      document.documentElement.classList.add('is-clipped');
+      // Scroll ao item selecionado
+      const sel = modal.querySelector('.tm-filter-cat-item.is-selected');
+      if (sel) setTimeout(() => sel.scrollIntoView({ block: 'nearest' }), 50);
+    }
+
+    function fecharModal() {
+      modal.classList.remove('is-active');
+      document.documentElement.classList.remove('is-clipped');
+    }
+
+    if (trigger) trigger.addEventListener('click', abrirModal);
+    document.getElementById('btn-close-cat-modal')?.addEventListener('click', fecharModal);
+    modal?.querySelector('.tm-cat-modal-bg')?.addEventListener('click', fecharModal);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+    items.forEach(btn => {
+      btn.addEventListener('click', function () {
+        items.forEach(b => b.classList.remove('is-selected'));
+        this.classList.add('is-selected');
+        if (hidden) hidden.value = this.dataset.catValue;
+        if (label)  label.textContent = this.dataset.catLabel;
+        fecharModal();
+      });
+    });
+  })();
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cards = Array.from(document.querySelectorAll('[data-swipe-card]'));
+    const emptyState = document.querySelector('[data-swipe-empty]');
+    const counter = document.querySelector('[data-swipe-counter]');
+    const swipeFeedback = document.querySelector('[data-swipe-feedback]');
+    const detailsPanel = document.querySelector('[data-details-panel]');
+    const detailsContent = document.querySelector('[data-details-content]');
+    const detailsEmpty = document.querySelector('[data-details-empty]');
+    const totalCards = cards.length;
+    let activeIndex = 0;
+    let startX = 0;
+    let currentX = 0;
+    let dragging = false;
+    let animating = false;
+    const threshold = 110;
+
+    const parseJson = (value, fallback) => {
+      try {
+        return value ? JSON.parse(value) : fallback;
+      } catch (_error) {
+        return fallback;
+      }
+    };
+
+    const setText = (selector, value) => {
+      const node = detailsPanel ? detailsPanel.querySelector(selector) : null;
+      if (node) node.textContent = value || '';
+    };
+
+    const updateDetailsPanel = (card) => {
+      if (!detailsPanel) return;
+      if (!card) {
+        detailsContent?.classList.add('is-hidden');
+        detailsEmpty?.classList.remove('is-hidden');
+        return;
+      }
+
+      detailsContent?.classList.remove('is-hidden');
+      detailsEmpty?.classList.add('is-hidden');
+
+      setText('[data-details-title]', card.dataset.title);
+      setText('[data-details-region]', card.dataset.region);
+      setText('[data-details-type]', card.dataset.type);
+      setText('[data-details-status]', `Vaga ${card.dataset.status || ''}`);
+      setText('[data-details-description]', card.dataset.description);
+      setText('[data-details-level]', card.dataset.level);
+      setText('[data-details-level-description]', card.dataset.levelDescription);
+      setText('[data-details-payment]', card.dataset.payment);
+      setText('[data-details-work-type]', card.dataset.type);
+
+      const match = detailsPanel.querySelector('[data-details-match]');
+      if (match) {
+        if (card.dataset.match) {
+          match.textContent = `${card.dataset.match}% Match`;
+          match.style.display = '';
+        } else {
+          match.style.display = 'none';
+        }
+      }
+
+      const skills = parseJson(card.dataset.skills, []);
+      const skillsBox = detailsPanel.querySelector('[data-details-skills]');
+      if (skillsBox) {
+        skillsBox.innerHTML = '';
+        skills.forEach((skill) => {
+          const chip = document.createElement('span');
+          chip.className = 'tm-swipe-chip';
+          chip.textContent = skill.charAt(0).toUpperCase() + skill.slice(1);
+          skillsBox.appendChild(chip);
+        });
+      }
+
+      const matchResult = parseJson(card.dataset.matchResult, {});
+      const summaryWrap = detailsPanel.querySelector('[data-details-summary-wrap]');
+      if (summaryWrap) {
+        if (matchResult.resumo) {
+          setText('[data-details-summary]', matchResult.resumo);
+          summaryWrap.style.display = '';
+        } else {
+          summaryWrap.style.display = 'none';
+        }
+      }
+
+      const companyWrap = detailsPanel.querySelector('[data-details-company-wrap]');
+      if (companyWrap) {
+        const name = card.dataset.companyName || '';
+        const type = card.dataset.companyType || '';
+        const region = card.dataset.companyRegion || '';
+        const desc = card.dataset.companyDesc || '';
+        const areas = card.dataset.companyAreas || '';
+        const employees = card.dataset.companyEmployees || '';
+        const site = card.dataset.companySite || '';
+
+        companyWrap.style.display = name ? '' : 'none';
+        if (name) {
+          const avatar = companyWrap.querySelector('[data-details-company-avatar]');
+          if (avatar) avatar.textContent = name.charAt(0).toUpperCase();
+
+          setText('[data-details-company-name]', name);
+
+          const meta = companyWrap.querySelector('[data-details-company-meta]');
+          if (meta) {
+            const parts = [type, region].filter(Boolean);
+            meta.textContent = parts.join(' · ');
+          }
+
+          const descEl = companyWrap.querySelector('[data-details-company-desc]');
+          if (descEl) {
+            descEl.textContent = desc;
+            descEl.style.display = desc ? '' : 'none';
+          }
+
+          const infoBox = companyWrap.querySelector('[data-details-company-info]');
+          if (infoBox) {
+            infoBox.innerHTML = '';
+            const addRow = (icon, label, value) => {
+              if (!value) return;
+              infoBox.insertAdjacentHTML('beforeend', `
+                <div class="tm-details-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--blue" aria-hidden="true">${icon}</span>
+                  <div><span>${label}</span><strong>${value}</strong></div>
+                </div>`);
+            };
+            addRow('<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', 'Equipe', employees ? `${employees} funcionários` : '');
+            addRow('<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>', 'Áreas', areas);
+            addRow('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>', 'Site', site);
+          }
+        }
+      }
+    };
+
+    const updateCounter = () => {
+      if (!counter) return;
+      if (activeIndex >= totalCards) {
+        counter.style.display = 'none';
+      } else {
+        counter.textContent = `${activeIndex + 1} de ${totalCards} vagas`;
+      }
+    };
+
+    const setSwipeFeedback = (direction) => {
+      if (!swipeFeedback) return;
+      swipeFeedback.classList.remove('is-visible', 'is-like', 'is-skip');
+      if (!direction) {
+        return;
+      }
+      const isLike = direction === 'like';
+      swipeFeedback.classList.add('is-visible', isLike ? 'is-like' : 'is-skip');
+    };
+
+    const updateStack = () => {
+      setSwipeFeedback(null);
+      cards.forEach((card, index) => {
+        card.classList.toggle('is-active', index === activeIndex);
+        card.classList.toggle('is-next', index === activeIndex + 1);
+      });
+
+      const activeCard = cards[activeIndex] || null;
+      updateDetailsPanel(activeCard);
+
+      if (activeIndex >= cards.length && emptyState) {
+        emptyState.classList.remove('is-hidden');
+      }
+
+      updateCounter();
+    };
+
+    const setCardPosition = (card, deltaX) => {
+      const rotation = deltaX / 18;
+      card.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg)`;
+      card.classList.toggle('is-liking', deltaX > 35);
+      card.classList.toggle('is-skipping', deltaX < -35);
+      setSwipeFeedback(deltaX > 35 ? 'like' : deltaX < -35 ? 'skip' : null);
+    };
+
+    const resetCard = (card) => {
+      card.style.transform = '';
+      card.classList.remove(
+        'is-dragging',
+        'is-liking',
+        'is-skipping',
+        'is-flying-left',
+        'is-flying-right'
+      );
+      setSwipeFeedback(null);
+    };
+
+    const persistAction = async (form) => {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('A ação não pôde ser registrada.');
+      }
+      return response.json();
+    };
+
+    const finishSwipe = async (card, direction) => {
+      if (animating) return;
+      const form = card.querySelector(`[data-swipe-action="${direction}"]`);
+      if (!form) return;
+
+      animating = true;
+      card.classList.add(direction === 'like' ? 'is-flying-right' : 'is-flying-left');
+      card.classList.toggle('is-liking', direction === 'like');
+      card.classList.toggle('is-skipping', direction === 'skip');
+      setSwipeFeedback(direction);
+
+      try {
+        await persistAction(form);
+        window.setTimeout(() => {
+          card.classList.remove('is-active', 'is-next');
+          activeIndex += 1;
+          currentX = 0;
+          animating = false;
+          setSwipeFeedback(null);
+          updateStack();
+        }, 230);
+      } catch (error) {
+        window.setTimeout(() => {
+          resetCard(card);
+          animating = false;
+          setSwipeFeedback(null);
+          alert(error.message);
+        }, 180);
+      }
+    };
+
+    cards.forEach((card) => {
+      card.querySelectorAll('[data-swipe-action]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (!card.classList.contains('is-active')) return;
+          finishSwipe(card, form.dataset.swipeAction);
+        });
+      });
+
+      const focusDetails = card.querySelector('[data-focus-details]');
+      if (focusDetails) {
+        focusDetails.addEventListener('click', () => {
+          updateDetailsPanel(card);
+          detailsPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          detailsPanel?.focus({ preventScroll: true });
+        });
+      }
+
+      card.addEventListener('pointerdown', (event) => {
+        if (!card.classList.contains('is-active') || animating) return;
+        if (event.target.closest('button, a, form')) return;
+        dragging = true;
+        startX = event.clientX;
+        card.setPointerCapture(event.pointerId);
+        card.classList.add('is-dragging');
+      });
+
+      card.addEventListener('pointermove', (event) => {
+        if (!dragging || !card.classList.contains('is-active')) return;
+        currentX = event.clientX - startX;
+        setCardPosition(card, currentX);
+      });
+
+      card.addEventListener('pointerup', () => {
+        if (!dragging || !card.classList.contains('is-active')) return;
+        dragging = false;
+        card.classList.remove('is-dragging');
+        if (currentX >= threshold) {
+          finishSwipe(card, 'like');
+          return;
+        }
+        if (currentX <= -threshold) {
+          finishSwipe(card, 'skip');
+          return;
+        }
+        currentX = 0;
+        resetCard(card);
+      });
+
+      card.addEventListener('pointercancel', () => {
+        dragging = false;
+        currentX = 0;
+        resetCard(card);
+        setSwipeFeedback(null);
+      });
+    });
+
+    document.querySelectorAll('[data-panel-action]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const activeCard = cards[activeIndex];
+        if (!activeCard) return;
+        const form = activeCard.querySelector(`[data-swipe-action="${button.dataset.panelAction}"]`);
+        if (form) finishSwipe(activeCard, form.dataset.swipeAction);
+      });
+    });
+
+    document.querySelector('[data-card-prev]')?.addEventListener('click', () => {
+      if (activeIndex <= 0 || animating) return;
+      resetCard(cards[activeIndex]);
+      activeIndex -= 1;
+      updateStack();
+    });
+
+    document.querySelector('[data-card-next]')?.addEventListener('click', () => {
+      if (activeIndex >= totalCards - 1 || animating) return;
+      resetCard(cards[activeIndex]);
+      activeIndex += 1;
+      updateStack();
+    });
+
+    updateStack();
+  });
+</script>
+{% endblock %}

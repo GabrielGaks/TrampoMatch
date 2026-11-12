@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Meus Matches — TrampoMatch{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section">
+  <div class="container tm-narrow-lg">
+    <div class="tm-page-header tm-reveal">
+      <h1 class="tm-section-title">Meus matches</h1>
+      <p class="tm-section-subtitle">Candidatos que também demonstraram interesse nas suas vagas.</p>
+    </div>
+
+    {% if matches %}
+      <div class="tm-matches-grid">
+        {% for match in matches %}
+          {% set candidato = match.candidato %}
+          {% set perfil = candidato.perfil_candidato %}
+          <div class="tm-match-card tm-reveal tm-d{{ (loop.index0 % 4) + 1 }}">
+            <div class="tm-match-card-header">
+              <div class="tm-match-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M20 21a8 8 0 0 0-16 0"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div class="tm-match-card-info">
+                <h3 class="tm-match-name">{{ candidato.nome }}</h3>
+                {% if perfil %}
+                  <p class="tm-match-meta">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {{ perfil.regiao }}
+                    <span class="tm-match-sep">•</span>
+                    {{ perfil.nivel_experiencia_rotulo }}
+                  </p>
+                {% endif %}
+              </div>
+              <div class="tm-match-badge-stack">
+                <span class="tm-match-badge-new">Match</span>
+                {% if match.mensagem_enviada_em %}
+                  <span class="tm-match-status-badge">Mensagem enviada</span>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if perfil %}
+              <div class="tm-match-card-body">
+                {% set skills = perfil.habilidades_lista() %}
+                {% if skills %}
+                  <div class="tm-swipe-chips">
+                    {% for skill in skills[:5] %}
+                      <span class="tm-swipe-chip">{{ skill|capitalize }}</span>
+                    {% endfor %}
+                    {% if skills|length > 5 %}
+                      <span class="tm-swipe-chip tm-swipe-chip--more">+{{ skills|length - 5 }}</span>
+                    {% endif %}
+                  </div>
+                {% endif %}
+                <div class="tm-match-details">
+                  <span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                    {{ perfil.tipo_trabalho|capitalize }}
+                  </span>
+                  <span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {{ perfil.disponibilidade|capitalize }}
+                  </span>
+                </div>
+                {% if perfil.curriculo_arquivo %}
+                  <a class="button tm-btn-outline tm-cv-link" href="{{ url_for('contratante.baixar_curriculo_candidato', id=candidato.id) }}">
+                    Ver currículo
+                  </a>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            {% if match.vaga %}
+              <div class="tm-match-card-body">
+                <p class="tm-match-vagas-label">Vaga do match:</p>
+                <ul class="tm-match-vagas-list">
+                  <li>
+                    <a href="{{ url_for('contratante.interessados', id=match.vaga.id) }}" class="tm-match-vaga-link">
+                      {{ match.vaga.titulo }}
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            {% endif %}
+
+            <div class="tm-match-card-footer">
+              <span class="tm-match-date">Match em {{ match.criado_em.strftime('%d/%m/%Y') }}</span>
+              <a href="{{ url_for('contratante.mensagem_match', match_id=match.id) }}" class="button tm-btn-outline tm-match-message-btn">
+                {{ 'Editar mensagem' if match.mensagem_enviada_em else 'Enviar mensagem' }}
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="tm-empty-state tm-reveal tm-reveal--scale">
+        <div class="tm-empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
+        <h2>Nenhum match ainda</h2>
+        <p>Explore os candidatos e expresse interesse para criar matches mútuos.</p>
+        <a href="{{ url_for('contratante.candidatos') }}" class="button tm-btn-primary">Descobrir candidatos</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

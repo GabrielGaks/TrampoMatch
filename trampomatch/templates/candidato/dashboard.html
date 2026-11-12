@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — TrampoMatch{% endblock %}
+
+{% block content %}
+<section class="tm-app-section">
+  <div class="container tm-dash-container">
+
+    {# ─── HERO ─── #}
+    <div class="tm-dash-hero tm-reveal">
+
+      {# Coluna 1: texto #}
+      <div class="tm-dash-hero-left">
+        <span class="tm-eyebrow">Candidato</span>
+        <h1 class="tm-dash-greeting">Olá, {{ current_user.nome.split()[0] }}! 👋</h1>
+        <p class="tm-dash-greeting-sub">
+          Este é o seu dashboard. Acompanhe suas oportunidades e encontre a vaga ideal para você.
+        </p>
+      </div>
+
+      {# Coluna 2: ilustração centralizada e grande #}
+      <div class="tm-dash-hero-center" aria-hidden="true">
+        <img
+          src="{{ url_for('static', filename='img/hero-dashboard.png') }}"
+          alt=""
+          class="tm-dash-hero-img"
+        >
+      </div>
+
+      {# Coluna 3: botões empilhados à direita #}
+      <div class="tm-dash-hero-actions">
+        <a class="button tm-btn-outline tm-dash-hero-btn" href="{{ url_for('candidato.minhas_vagas') }}">
+          <span class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          </span>
+          <span>Minhas vagas</span>
+        </a>
+        <a class="button tm-btn-primary tm-dash-hero-btn" href="{{ url_for('vagas.listagem') }}">
+          <span class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </span>
+          <span>Descobrir vagas</span>
+        </a>
+      </div>
+
+    </div>
+
+    {# ─── AVISO PERFIL INCOMPLETO ─── #}
+    {% if not perfil %}
+      <div class="notification is-warning is-light" style="margin-bottom:1rem;">
+        <strong>Perfil incompleto.</strong>
+        <a href="{{ url_for('candidato.perfil') }}">Complete seu perfil</a> para receber vagas compatíveis.
+      </div>
+    {% endif %}
+
+    {# ─── STAT CARDS ─── #}
+    <div class="tm-dash-stats">
+
+      <div class="tm-dash-stat-card tm-reveal tm-d1">
+        <div class="tm-dash-stat-icon tm-dash-stat-icon--blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        </div>
+        <div class="tm-dash-stat-body">
+          <span class="tm-dash-stat-label">Vagas abertas</span>
+          <strong class="tm-dash-stat-value tm-dash-stat-value--blue">{{ total_vagas }}</strong>
+          <span class="tm-dash-stat-hint">
+            <span class="tm-dash-dot tm-dash-dot--green"></span>Disponíveis agora
+          </span>
+        </div>
+        <a href="{{ url_for('vagas.listagem') }}" class="tm-dash-stat-arrow" title="Ver vagas">›</a>
+      </div>
+
+      <div class="tm-dash-stat-card tm-reveal tm-d2">
+        <div class="tm-dash-stat-icon tm-dash-stat-icon--green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>
+        </div>
+        <div class="tm-dash-stat-body">
+          <span class="tm-dash-stat-label">Compatíveis com seu perfil</span>
+          <strong class="tm-dash-stat-value tm-dash-stat-value--green">{{ vagas_compativeis }}</strong>
+          <span class="tm-dash-stat-hint tm-dash-stat-hint--split">
+            {% if perfil %}
+              <span class="tm-dash-hint-pill tm-dash-hint-pill--green">{{ vagas_compativeis }} em aberto</span>
+              <span class="tm-dash-hint-pill tm-dash-hint-pill--purple">{{ compativeis_aceitas }} aceita{{ 's' if compativeis_aceitas != 1 }}</span>
+            {% else %}
+              <span class="tm-dash-dot tm-dash-dot--green"></span>Complete o perfil
+            {% endif %}
+          </span>
+        </div>
+        <a href="{{ url_for('vagas.listagem') }}" class="tm-dash-stat-arrow" title="Ver compatíveis">›</a>
+      </div>
+
+      <div class="tm-dash-stat-card tm-reveal tm-d3">
+        <div class="tm-dash-stat-icon tm-dash-stat-icon--purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div class="tm-dash-stat-body">
+          <span class="tm-dash-stat-label">Adicionadas aos interesses</span>
+          <strong class="tm-dash-stat-value tm-dash-stat-value--purple">{{ total_interesses }}</strong>
+          <span class="tm-dash-stat-hint">
+            <span class="tm-dash-dot tm-dash-dot--purple"></span>Salvas por você
+          </span>
+        </div>
+        <a href="{{ url_for('candidato.minhas_vagas') }}" class="tm-dash-stat-arrow" title="Minhas vagas">›</a>
+      </div>
+
+      <div class="tm-dash-stat-card tm-reveal tm-d4">
+        <div class="tm-dash-stat-icon tm-dash-stat-icon--match">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div class="tm-dash-stat-body">
+          <span class="tm-dash-stat-label">Matches</span>
+          <strong class="tm-dash-stat-value tm-dash-stat-value--match">{{ total_matches }}</strong>
+          <span class="tm-dash-stat-hint tm-dash-stat-hint--split">
+            <span class="tm-dash-dot" style="background:#34C759"></span>Empresas combinaram
+            {% if novos_matches > 0 %}
+              <span class="tm-dash-hint-pill tm-dash-hint-pill--new">+{{ novos_matches }} novo{{ 's' if novos_matches > 1 }}</span>
+            {% endif %}
+          </span>
+        </div>
+        <a href="{{ url_for('candidato.matches') }}" class="tm-dash-stat-arrow" title="Ver matches">›</a>
+      </div>
+
+      <div class="tm-dash-stat-card tm-reveal tm-d5">
+        <div class="tm-dash-stat-icon tm-dash-stat-icon--convite">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div class="tm-dash-stat-body">
+          <span class="tm-dash-stat-label">Convites recebidos</span>
+          <strong class="tm-dash-stat-value tm-dash-stat-value--convite">{{ total_convites }}</strong>
+          <span class="tm-dash-stat-hint tm-dash-stat-hint--split">
+            <span class="tm-dash-dot" style="background:#007AFF"></span>De empresas para você
+            {% if novos_convites > 0 %}
+              <span class="tm-dash-hint-pill tm-dash-hint-pill--new">+{{ novos_convites }} novo{{ 's' if novos_convites > 1 }}</span>
+            {% endif %}
+          </span>
+        </div>
+        <a href="{{ url_for('candidato.convites') }}" class="tm-dash-stat-arrow" title="Ver convites">›</a>
+      </div>
+
+    </div>
+
+    {# ─── CONTEÚDO PRINCIPAL ─── #}
+    <div class="tm-dash-main">
+
+      {# Vagas Compatíveis #}
+      <div class="tm-dash-panel tm-reveal tm-d1">
+        <div class="tm-section-header">
+          <div class="tm-dash-header-left">
+            <span class="tm-section-title">Vagas compatíveis</span>
+            {% if vagas_compativeis > 0 %}
+              <span class="tm-dash-count-badge">{{ vagas_compativeis }}</span>
+            {% endif %}
+          </div>
+          <a href="{{ url_for('vagas.listagem') }}" class="tm-section-link">Ver todas</a>
+        </div>
+
+        {# ── Seção 1: Em aberto ── #}
+        {% if vagas_com_score %}
+          <div class="tm-dash-group-label">Em aberto</div>
+          {% for vaga, resultado in vagas_com_score %}
+          <a class="tm-dash-vaga-item" href="{{ url_for('vagas.detalhe', id=vaga.id) }}">
+            <div class="tm-dash-vaga-icon {{ 'tm-dash-vaga-icon--green' if loop.index0 % 2 == 0 else 'tm-dash-vaga-icon--blue' }}">
+              {% if loop.index0 % 2 == 0 %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M8 17.5h7M15 6l2 5.5h-2l-2-5.5H8L5.5 15"/></svg>
+              {% else %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              {% endif %}
+            </div>
+            <div class="tm-dash-vaga-body">
+              <div class="tm-dash-vaga-header">
+                <span class="tm-dash-vaga-title">{{ vaga.titulo }}</span>
+                <span class="tm-dash-match-badge">{{ resultado.score | int }}% Match</span>
+              </div>
+              <div class="tm-dash-vaga-meta">
+                <span>{{ vaga.regiao }}</span>
+                <span class="tm-dash-sep">•</span>
+                <span>{{ vaga.tipo_vaga | capitalize }}</span>
+                <span class="tm-dash-sep">•</span>
+                <span class="tm-dash-status-open">• Aberta</span>
+              </div>
+              <p class="tm-dash-vaga-desc">{{ vaga.descricao | truncate(90) }}</p>
+              <div class="tm-dash-vaga-tags">
+                {% for hab in vaga.habilidades_lista()[:3] %}
+                  <span class="tm-dash-skill-tag">{{ hab | capitalize }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            <span class="tm-dash-arrow">›</span>
+          </a>
+          {% endfor %}
+        {% elif perfil %}
+          <p class="tm-section-subtitle" style="margin-top:0.5rem;color:var(--text-muted);">
+            Nenhuma vaga compatível em aberto no momento.
+          </p>
+        {% else %}
+          <p class="tm-section-subtitle" style="margin-top:0.5rem;color:var(--text-muted);">
+            <a href="{{ url_for('candidato.perfil') }}">Complete seu perfil</a> para ver vagas compatíveis.
+          </p>
+        {% endif %}
+
+        {# ── Seção 2: Já aceitas ── #}
+        {% if vagas_aceitas_com_score %}
+          <div class="tm-dash-group-label tm-dash-group-label--aceitas">Já aceitas por você</div>
+          {% for vaga, resultado in vagas_aceitas_com_score %}
+          <a class="tm-dash-vaga-item tm-dash-vaga-item--aceita" href="{{ url_for('vagas.detalhe', id=vaga.id) }}">
+            <div class="tm-dash-vaga-icon tm-dash-vaga-icon--purple">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+            <div class="tm-dash-vaga-body">
+              <div class="tm-dash-vaga-header">
+                <span class="tm-dash-vaga-title">{{ vaga.titulo }}</span>
+                <span class="tm-dash-match-badge tm-dash-match-badge--aceita">✓ {{ resultado.score | int }}%</span>
+              </div>
+              <div class="tm-dash-vaga-meta">
+                <span>{{ vaga.regiao }}</span>
+                <span class="tm-dash-sep">•</span>
+                <span>{{ vaga.tipo_vaga | capitalize }}</span>
+                <span class="tm-dash-sep">•</span>
+                <span style="color:#7C3AED;font-weight:600;">♥ Interesse enviado</span>
+              </div>
+              <div class="tm-dash-vaga-tags">
+                {% for hab in vaga.habilidades_lista()[:3] %}
+                  <span class="tm-dash-skill-tag">{{ hab | capitalize }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            <span class="tm-dash-arrow">›</span>
+          </a>
+          {% endfor %}
+        {% endif %}
+
+        {% if vagas_com_score or vagas_aceitas_com_score %}
+          <a href="{{ url_for('vagas.listagem') }}" class="tm-dash-footer-link">
+            Ver todas as vagas ›
+          </a>
+        {% endif %}
+      </div>
+
+      {# Atividades Recentes #}
+      <div class="tm-dash-panel tm-reveal tm-d2">
+        <div class="tm-section-header" style="margin-bottom:1.25rem;">
+          <span class="tm-section-title">Atividades recentes</span>
+        </div>
+
+        {% if atividades_recentes %}
+          {% for atv in atividades_recentes %}
+          <div class="tm-dash-atividade-item">
+            {% if atv.tipo == 'interesse' %}
+              <div class="tm-dash-atv-icon tm-dash-atv-icon--purple">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </div>
+            {% else %}
+              <div class="tm-dash-atv-icon tm-dash-atv-icon--gray">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              </div>
+            {% endif %}
+            <div class="tm-dash-atv-body">
+              {% if atv.tipo == 'interesse' %}
+                <span class="tm-dash-atv-title">Interesse em "{{ atv.titulo }}"</span>
+              {% else %}
+                <span class="tm-dash-atv-title">Passou por "{{ atv.titulo }}"</span>
+              {% endif %}
+              <span class="tm-dash-atv-date">{{ atv.criado_em.strftime('%d/%m, %H:%M') }}</span>
+            </div>
+          </div>
+          {% endfor %}
+
+        {% else %}
+          <p class="tm-section-subtitle" style="margin-top:1rem;color:var(--text-muted);">
+            Nenhuma atividade ainda. Explore as vagas disponíveis!
+          </p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{# ── Modal de novidades ── #}
+{% if novos_matches > 0 or novos_convites > 0 %}
+<div class="modal tm-novidades-modal is-active" id="modal-novidades" role="dialog" aria-modal="true" aria-labelledby="novidades-titulo">
+  <div class="modal-background tm-novidades-bg"></div>
+  <div class="tm-novidades-card">
+
+    <div class="tm-novidades-handle"></div>
+
+    <div class="tm-novidades-header">
+      <div class="tm-novidades-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <div>
+        <p class="tm-novidades-eyebrow">Bem-vindo de volta!</p>
+        <h2 class="tm-novidades-title" id="novidades-titulo">O que aconteceu enquanto você estava fora</h2>
+      </div>
+      <button class="tm-novidades-close" id="btn-fechar-novidades" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="tm-novidades-body">
+      {% if novos_matches > 0 %}
+      <a href="{{ url_for('candidato.matches') }}" class="tm-novidades-item tm-novidades-item--match">
+        <div class="tm-novidades-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
+        <div class="tm-novidades-item-text">
+          <strong>{{ novos_matches }} novo{{ 's' if novos_matches > 1 }} match{{ 'es' if novos_matches > 1 }}</strong>
+          <span>{{ 'Uma empresa combina' if novos_matches == 1 else 'Empresas combinam' }} com o seu perfil. Ver agora →</span>
+        </div>
+        <span class="tm-novidades-badge">{{ novos_matches }}</span>
+      </a>
+      {% endif %}
+
+      {% if novos_convites > 0 %}
+      <a href="{{ url_for('candidato.convites') }}" class="tm-novidades-item tm-novidades-item--convite">
+        <div class="tm-novidades-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <div class="tm-novidades-item-text">
+          <strong>{{ novos_convites }} novo{{ 's' if novos_convites > 1 }} convite{{ 's' if novos_convites > 1 }}</strong>
+          <span>{{ 'Uma empresa te' if novos_convites == 1 else 'Empresas te' }} convidou para uma vaga. Ver agora →</span>
+        </div>
+        <span class="tm-novidades-badge">{{ novos_convites }}</span>
+      </a>
+      {% endif %}
+    </div>
+
+    <button class="tm-novidades-dismiss" id="btn-dispensar-novidades">Entendido</button>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% if novos_matches > 0 or novos_convites > 0 %}
+<script>
+  (function () {
+    const modal = document.getElementById('modal-novidades');
+    if (!modal) return;
+
+    function fechar() {
+      fetch("{{ url_for('candidato.dispensar_novidades') }}", { method: 'POST' });
+      modal.classList.add('tm-novidades-saindo');
+      setTimeout(() => modal.remove(), 280);
+    }
+
+    document.getElementById('btn-fechar-novidades')?.addEventListener('click', fechar);
+    document.getElementById('btn-dispensar-novidades')?.addEventListener('click', fechar);
+    modal.querySelector('.tm-novidades-bg')?.addEventListener('click', fechar);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fechar(); }, { once: true });
+  })();
+</script>
+{% endif %}
+{% endblock %}

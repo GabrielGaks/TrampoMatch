@@ -1,0 +1,1682 @@
+{% extends 'base.html' %}
+{% from '_form_helpers.html' import render_field %}
+
+{% block title %}{{ titulo }} — TrampoMatch{% endblock %}
+
+{% block css %}
+<style>
+  .tm-vf-wizard-wrap .tm-company-stepper {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .tm-vf-wizard-wrap .tm-company-stepper li::after {
+    display: none;
+  }
+  .tm-vf-wizard-wrap .tm-company-stepper li:nth-child(4) span {
+    background: #fff7ed;
+    border-color: #fed7aa;
+    color: #ea580c;
+  }
+  /* Navbar sticky apenas nesta página */
+  body:has(.tm-vf-wizard-wrap) header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  /* Wrapper sticky: referência de posicionamento para o ícone voltar */
+  .tm-vf-hero-outer {
+    padding-top: 0.5rem;
+    position: sticky;
+    top: 3.95rem;
+    z-index: 50;
+  }
+  /* Ícone voltar fora do card — posicionado absolutamente à esquerda do hero */
+  .tm-vf-back-icon {
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text-muted);
+    display: flex;
+    height: 2rem;
+    justify-content: center;
+    left: -2.75rem;
+    position: absolute;
+    text-decoration: none;
+    top: 0.9rem;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    width: 2rem;
+    z-index: 1;
+  }
+  .tm-vf-back-icon svg {
+    fill: none;
+    height: 0.9rem;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.5;
+    width: 0.9rem;
+  }
+  .tm-vf-back-icon:hover {
+    background: #eff6ff;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  /* Hero largura total do container, sem max-width extra */
+  .tm-vf-wizard-hero {
+    background: linear-gradient(135deg, #eff6ff 0%, #ffffff 48%, #f0fdf4 100%) !important;
+    margin: 0;
+    max-width: none;
+  }
+  /* Hero: flex coluna + padding compacto */
+  .tm-vf-wizard-hero.tm-company-hero {
+    align-items: stretch;
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.85rem 1.5rem;
+  }
+  /* Seção sem padding excessivo */
+  .section.tm-app-section.tm-vf-wizard-wrap {
+    padding-bottom: 1.25rem !important;
+    padding-top: 0 !important;
+  }
+  /* Form card: largura total, separação mínima do hero */
+  .tm-vf-wizard-wrap .tm-google-onboarding-grid.is-wizard {
+    margin-top: 0.5rem;
+    max-width: none;
+  }
+  /* Form card padding compacto */
+  .tm-vf-wizard-wrap .tm-google-form-card {
+    padding: 1.25rem 1.5rem;
+  }
+  .tm-vf-hero-toprow {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+  }
+  .tm-vf-hero-title-group { flex: 1; }
+  .tm-vf-hero-title-group h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+  .tm-vf-hero-title-group p  { font-size: 0.875rem; margin: 0; }
+  .tm-vf-step-badge { text-align: right; white-space: nowrap; }
+  .tm-vf-step-badge strong { display: block; font-size: 0.88rem; font-weight: 700; }
+  .tm-vf-step-badge span   { font-size: 0.78rem; opacity: 0.75; }
+  /* Tipo de vaga — lista vertical (etapa 2) */
+  .tm-vf-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .tm-vf-type-list .tm-vf-type-card {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    text-align: left;
+  }
+  .tm-vf-type-list .tm-vf-type-card-texts {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .tm-vf-type-list .tm-vf-type-card-label { font-size: 0.88rem; font-weight: 600; }
+  .tm-vf-type-list .tm-vf-type-card-sub   { font-size: 0.78rem; }
+  .tm-vf-three-option-select + .tm-custom-select .tm-custom-select-menu {
+    max-height: 7.65rem;
+  }
+  /* Categoria — no máximo 4 opções visíveis; menu acima de botões e demais campos */
+  .tm-vf-wizard-wrap .tm-native-select-wrap:has(select[name="categoria"]) + .tm-custom-select .tm-custom-select-menu {
+    max-height: calc((2.15rem * 4) + (0.2rem * 3) + 0.8rem);
+    overscroll-behavior: contain;
+    scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+    scrollbar-width: thin;
+  }
+  .tm-vf-wizard-wrap .tm-native-select-wrap:has(select[name="categoria"]) + .tm-custom-select .tm-custom-select-menu::-webkit-scrollbar {
+    width: 6px;
+  }
+  .tm-vf-wizard-wrap .tm-native-select-wrap:has(select[name="categoria"]) + .tm-custom-select .tm-custom-select-menu::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 999px;
+  }
+  .tm-vf-wizard-wrap .tm-google-wizard-card:has(.tm-custom-select.is-open),
+  .tm-vf-wizard-wrap .tm-company-form-panel:has(.tm-custom-select.is-open) {
+    overflow: visible;
+  }
+  .tm-vf-wizard-wrap .tm-company-form-panel:has(.tm-custom-select.is-open) .tm-google-wizard-actions {
+    position: relative;
+    z-index: 1;
+  }
+  .tm-vf-wizard-wrap .tm-google-wizard-step.is-active:has(.tm-custom-select.is-open) {
+    position: relative;
+    z-index: 510;
+  }
+  .tm-vf-wizard-wrap .tm-custom-select.is-open {
+    z-index: 520;
+  }
+  .tm-vf-wizard-wrap .tm-custom-select.is-open .tm-custom-select-menu {
+    box-shadow:
+      0 4px 8px rgba(15, 23, 42, 0.08),
+      0 16px 40px rgba(15, 23, 42, 0.16);
+  }
+  .tm-vf-status-level-grid {
+    align-items: start;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: minmax(10rem, 0.45fr) minmax(0, 1fr);
+    margin-bottom: 0.75rem;
+  }
+  .tm-vf-status-level-grid .field {
+    margin-bottom: 0;
+  }
+  .tm-vf-profile-grid {
+    align-items: start;
+    display: grid;
+    gap: 0.75rem 1rem;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    margin-bottom: 0.55rem;
+  }
+  .tm-vf-compact-group {
+    margin-bottom: 0;
+  }
+  .tm-vf-compact-row {
+    display: grid;
+    gap: 0.35rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tm-vf-compact-row .field,
+  .tm-vf-compact-row .control {
+    margin-bottom: 0;
+  }
+  .tm-vf-compact-row .label {
+    font-size: 0.72rem;
+    margin-bottom: 0.25rem;
+  }
+  .tm-vf-compact-row .input {
+    font-size: 0.82rem;
+    height: 2.15rem;
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
+  .tm-vf-compact-help {
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    margin-top: 0.35rem;
+  }
+  /* Preview card */
+  .tm-vf-preview-card {
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 1.25rem;
+    padding: 1.35rem 1.5rem;
+  }
+  .tm-vf-preview-title {
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 0.4rem;
+  }
+  .tm-vf-preview-desc {
+    color: var(--text-muted);
+    display: -webkit-box;
+    font-size: 0.88rem;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-height: 1.5;
+    margin: 0 0 1rem;
+    overflow: hidden;
+  }
+  .tm-vf-preview-facts {
+    display: grid;
+    gap: 0.6rem 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 1rem;
+  }
+  .tm-vf-preview-fact dt {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.15rem;
+    text-transform: uppercase;
+  }
+  .tm-vf-preview-fact dd {
+    color: var(--text-dark);
+    font-size: 0.86rem;
+    font-weight: 500;
+    margin: 0;
+  }
+  .tm-vf-preview-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+  }
+  .tm-vf-preview-skill-tag {
+    background: var(--primary-lighter);
+    border: 1px solid var(--badge-border);
+    border-radius: 999px;
+    color: var(--primary);
+    font-size: 0.76rem;
+    font-weight: 500;
+    padding: 0.28rem 0.58rem;
+  }
+  .tm-vf-preview-empty {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    font-style: italic;
+  }
+  .tm-vf-confirmation {
+    align-items: stretch;
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: minmax(0, 1.65fr) minmax(12.5rem, 0.34fr);
+    height: auto;
+    min-height: 0;
+  }
+  .tm-vf-confirm-main,
+  .tm-vf-confirm-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+  }
+  .tm-vf-confirm-main {
+    padding-right: 0.2rem;
+  }
+  .tm-vf-confirmation .tm-vf-confirm-card {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+  .tm-vf-confirm-main .tm-vf-confirm-card {
+    min-height: 13.5rem;
+  }
+  .tm-vf-confirm-eyebrow svg,
+  .tm-vf-confirm-location svg,
+  .tm-vf-confirm-job-icon svg,
+  .tm-vf-confirm-icon svg,
+  .tm-vf-confirm-check-icon svg {
+    display: block;
+    fill: none;
+    height: 1rem;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    width: 1rem;
+    margin: 0;
+  }
+  .tm-vf-confirm-card p {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    margin: 0;
+  }
+  .tm-vf-confirm-desc {
+    max-height: 4.5rem;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+  .tm-vf-confirm-job-icon svg {
+    height: 1.35rem;
+    width: 1.35rem;
+  }
+  .tm-vf-confirm-check-icon svg {
+    height: 0.85rem;
+    width: 0.85rem;
+  }
+  .tm-vf-confirm-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(30, 41, 59, 0.06);
+    padding: 0.95rem 1rem;
+  }
+  .tm-vf-confirm-eyebrow {
+    align-items: center;
+    align-self: flex-start;
+    background: var(--primary-lighter);
+    border: 1px solid var(--badge-border);
+    border-radius: 999px;
+    color: var(--primary);
+    display: inline-flex;
+    font-size: 0.66rem;
+    font-weight: 600;
+    gap: 0.25rem;
+    margin-bottom: 0.55rem;
+    max-width: max-content;
+    padding: 0.14rem 0.42rem;
+    width: auto;
+  }
+  .tm-vf-confirm-eyebrow svg {
+    height: 0.72rem;
+    width: 0.72rem;
+  }
+  .tm-vf-confirm-job-head {
+    align-items: center;
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 0.7rem;
+  }
+  .tm-vf-confirm-job-icon,
+  .tm-vf-confirm-icon,
+  .tm-vf-confirm-check-icon {
+    align-items: center;
+    border-radius: 8px;
+    display: inline-grid;
+    flex-shrink: 0;
+    justify-content: center;
+    line-height: 0;
+    place-content: center;
+    place-items: center;
+    text-align: center;
+  }
+  .tm-vf-confirm-job-icon {
+    background: rgba(0, 122, 255, 0.08);
+    color: #007AFF;
+    height: 2.8rem;
+    width: 2.8rem;
+  }
+  .tm-vf-confirm-title-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .tm-vf-confirm-title-row h3 {
+    color: var(--text-dark);
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0;
+  }
+  .tm-vf-confirm-location {
+    align-items: center;
+    color: var(--text-muted);
+    display: inline-flex;
+    font-size: 0.78rem;
+    gap: 0.25rem;
+    margin-top: 0.2rem;
+  }
+  .tm-vf-confirm-status {
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 650;
+    padding: 0.18rem 0.5rem;
+  }
+  .tm-vf-confirm-facts {
+    display: grid;
+    gap: 0.7rem 1.1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0.7rem 0;
+  }
+  .tm-vf-confirm-fact {
+    align-items: center;
+    display: flex;
+    gap: 0.55rem;
+    min-width: 0;
+  }
+  .tm-vf-confirm-icon {
+    background: rgba(0, 122, 255, 0.07);
+    color: #007AFF;
+    height: 2rem;
+    width: 2rem;
+  }
+  .tm-vf-confirm-fact:nth-child(2) .tm-vf-confirm-icon {
+    background: rgba(90, 200, 250, 0.10);
+    color: #0EA5E9;
+  }
+  .tm-vf-confirm-fact:nth-child(3) .tm-vf-confirm-icon {
+    background: rgba(255, 149, 0, 0.10);
+    color: #D97706;
+  }
+  .tm-vf-confirm-fact:nth-child(4) .tm-vf-confirm-icon {
+    background: rgba(52, 199, 89, 0.10);
+    color: #16A34A;
+  }
+  .tm-vf-confirm-fact:nth-child(5) .tm-vf-confirm-icon {
+    background: rgba(88, 86, 214, 0.10);
+    color: #6366F1;
+  }
+  .tm-vf-confirm-fact span {
+    color: var(--text-muted);
+    display: block;
+    font-size: 0.68rem;
+    line-height: 1.15;
+    margin-bottom: 0.12rem;
+  }
+  .tm-vf-confirm-fact strong {
+    color: var(--text-dark);
+    display: block;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tm-vf-confirm-skills-title {
+    color: var(--text-dark);
+    font-size: 0.8rem;
+    font-weight: 650;
+    margin: 0.6rem 0 0.35rem;
+  }
+  .tm-vf-confirm-card h4 {
+    color: var(--text-dark);
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+  }
+  .tm-vf-confirm-checklist {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .tm-vf-confirm-check {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .tm-vf-confirm-check-icon {
+    background: rgba(52, 199, 89, 0.10);
+    color: #34C759;
+    height: 1.35rem;
+    width: 1.35rem;
+  }
+  .tm-vf-confirm-check.is-warning .tm-vf-confirm-check-icon {
+    background: rgba(255, 149, 0, 0.10);
+    color: #FF9500;
+  }
+  .tm-vf-confirm-check strong {
+    color: var(--text-dark);
+    display: block;
+    font-size: 0.76rem;
+    line-height: 1.2;
+  }
+  .tm-vf-confirm-check span {
+    color: var(--text-muted);
+    display: block;
+    font-size: 0.68rem;
+    line-height: 1.25;
+  }
+  .tm-vf-review-nav {
+    align-items: center;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+  body:has(.tm-vf-wizard-wrap [data-wizard-step="4"].is-active) {
+    overflow: hidden;
+  }
+  html.tm-vf-review-lock,
+  body.tm-vf-review-lock {
+    height: 100dvh;
+    overflow: hidden !important;
+  }
+  body.tm-vf-review-lock {
+    inset: 0;
+    position: fixed;
+    width: 100%;
+  }
+  body:has(.tm-vf-wizard-wrap [data-wizard-step="4"].is-active) .section.tm-app-section.tm-vf-wizard-wrap {
+    padding-bottom: 0 !important;
+  }
+  body.tm-vf-review-lock .section.tm-app-section.tm-vf-wizard-wrap {
+    padding-bottom: 0 !important;
+  }
+  body:has(.tm-vf-wizard-wrap [data-wizard-step="4"].is-active) .tm-vf-hero-outer {
+    padding-top: 0.25rem;
+  }
+  body.tm-vf-review-lock .tm-vf-hero-outer {
+    padding-top: 0.25rem;
+  }
+  body:has(.tm-vf-wizard-wrap [data-wizard-step="4"].is-active) .tm-vf-wizard-wrap .tm-google-onboarding-grid.is-wizard {
+    margin-top: 0.35rem;
+  }
+  body.tm-vf-review-lock .tm-vf-wizard-wrap .tm-google-onboarding-grid.is-wizard {
+    margin-top: 0.35rem;
+  }
+  body:has(.tm-vf-wizard-wrap [data-wizard-step="4"].is-active) .tm-vf-wizard-wrap .tm-google-form-card {
+    padding: 0.85rem 1.15rem;
+  }
+  body.tm-vf-review-lock .tm-vf-wizard-wrap .tm-google-form-card {
+    padding: 0.85rem 1.15rem;
+  }
+  @media (max-width: 1180px) {
+    /* Sem espaço lateral — ícone entra dentro do hero (canto esquerdo) */
+    .tm-vf-back-icon {
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .tm-vf-wizard-hero.tm-company-hero {
+      padding-left: 3.5rem;  /* recuo para o ícone não sobrepor o título */
+    }
+  }
+  /* Tag-input — chips + texto no mesmo box */
+  .tm-vf-skill-row {
+    display: block;
+  }
+  .tm-vf-skill-combobox {
+    position: relative;
+    width: 100%;
+  }
+  .tm-vf-skill-control {
+    align-items: stretch;
+    display: flex;
+    width: 100%;
+  }
+  .tm-vf-tag-input {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px 0 0 8px;
+    border-right: 0;
+    cursor: text;
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    max-height: 4.8rem;
+    min-height: 2.65rem;
+    overflow-y: auto;
+    padding: 0.35rem 0.65rem;
+    width: auto;
+  }
+  .tm-vf-tag-input:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.10);
+  }
+  .tm-vf-tag-input input {
+    background: transparent;
+    border: none;
+    flex: 1;
+    font-size: 0.875rem;
+    min-width: 7rem;
+    outline: none;
+    padding: 0.1rem 0;
+  }
+  .tm-vf-skill-add-btn {
+    border-color: #CBD5E1 !important;
+    border-radius: 0 8px 8px 0 !important;
+    color: var(--primary) !important;
+    flex-shrink: 0;
+    font-weight: 600;
+    min-height: 2.65rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .tm-vf-skill-add-btn:hover,
+  .tm-vf-skill-add-btn:focus {
+    background: var(--primary-lighter);
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+  }
+  .tm-vf-tag-chip {
+    align-items: center;
+    background: var(--primary-lighter);
+    border: 1px solid var(--badge-border);
+    border-radius: 999px;
+    color: var(--primary);
+    display: inline-flex;
+    font-size: 0.74rem;
+    font-weight: 500;
+    gap: 0.2rem;
+    padding: 0.1rem 0.4rem;
+    white-space: nowrap;
+  }
+  .tm-vf-tag-chip button {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+    opacity: 0.6;
+    padding: 0;
+  }
+  .tm-vf-tag-chip button:hover { opacity: 1; }
+  .tm-vf-step-inline-actions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+  /* Dropdown de sugestões */
+  #vf_skill_dropdown {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    bottom: 100%;
+    box-shadow: 0 -14px 30px rgba(30, 41, 59, 0.12);
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+    margin-bottom: 0.35rem;
+    max-height: 12rem;
+    overflow-y: auto;
+    padding: 0.35rem;
+    top: auto !important;
+  }
+  .tm-vf-skill-option {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    color: var(--text-dark);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0.65rem;
+    text-align: left;
+    width: 100%;
+  }
+  .tm-vf-skill-option:hover,
+  .tm-vf-skill-option:focus {
+    background: var(--primary-lighter);
+    color: var(--primary);
+    outline: none;
+  }
+  .tm-vf-skill-option.is-create {
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .tm-vf-skill-option-title {
+    font-size: 0.86rem;
+    font-weight: 500;
+  }
+  .tm-vf-skill-option-meta {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  @media (max-width: 1024px) {
+    .tm-vf-preview-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tm-vf-confirmation { grid-template-columns: 1fr; max-height: none; }
+  }
+  @media (max-width: 768px) {
+    .tm-vf-preview-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tm-vf-hero-toprow { flex-wrap: wrap; }
+    .tm-vf-step-badge { text-align: left; white-space: normal; }
+    .tm-vf-confirmation,
+    .tm-vf-status-level-grid,
+    .tm-vf-profile-grid {
+      grid-template-columns: 1fr;
+    }
+    .tm-vf-confirmation {
+      max-height: none;
+    }
+    .tm-vf-confirm-facts {
+      grid-template-columns: 1fr;
+    }
+    .tm-vf-skill-control,
+    .tm-vf-step-inline-actions {
+      flex-direction: column;
+    }
+    .tm-vf-tag-input {
+      border-radius: 8px;
+      border-right: 1px solid #CBD5E1;
+    }
+    .tm-vf-skill-add-btn {
+      border-radius: 8px !important;
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section tm-vf-wizard-wrap">
+  <div class="container">
+
+    {# ── Ícone voltar + Hero sticky ──────────────────────────────────── #}
+    <div class="tm-vf-hero-outer">
+      <a href="{{ url_for('contratante.minhas_vagas') }}" class="tm-vf-back-icon tm-reveal" aria-label="Voltar para Minhas vagas" title="Minhas vagas">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </a>
+      <div class="tm-company-hero tm-reveal tm-vf-wizard-hero">
+        <div class="tm-vf-hero-toprow">
+          <span class="tm-company-hero-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true" stroke-width="2.1">
+              <rect x="2" y="7" width="20" height="14" rx="2"/>
+              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+              <path d="M12 12v2M11 14h2"/>
+            </svg>
+          </span>
+          <div class="tm-vf-hero-title-group">
+            <h1>{{ titulo }}</h1>
+            <p>Preencha cada etapa para publicar sua vaga na plataforma.</p>
+          </div>
+          <div class="tm-vf-step-badge">
+            <strong>Etapa <span id="vf-step-num">1</span> de 4</strong>
+            <span id="vf-step-name">Identidade da vaga</span>
+          </div>
+        </div>
+        <div class="tm-google-progress-track">
+          <span id="vf-progress-fill" style="width:25%;display:block;height:100%;background:var(--primary);border-radius:inherit;transition:width 0.35s ease;"></span>
+        </div>
+      </div>
+    </div>
+
+    {# ── Form wizard ─────────────────────────────────────────────────── #}
+    <div class="tm-google-onboarding-grid is-wizard is-company-profile tm-reveal tm-d2">
+      <form class="tm-google-form-card tm-google-wizard-card tm-company-profile-card" method="post" novalidate>
+        {{ form.hidden_tag() }}
+
+        {# Indicadores das 4 etapas #}
+        <ol class="tm-google-stepper tm-company-stepper" aria-label="Etapas do formulário de vaga">
+          <li class="is-active" data-step-indicator="1">
+            <span>1</span>
+            <strong>Identidade</strong>
+          </li>
+          <li data-step-indicator="2">
+            <span>2</span>
+            <strong>Local & Tipo</strong>
+          </li>
+          <li data-step-indicator="3">
+            <span>3</span>
+            <strong>Perfil</strong>
+          </li>
+          <li data-step-indicator="4">
+            <span>4</span>
+            <strong>Revisão</strong>
+          </li>
+        </ol>
+
+        <div class="tm-company-profile-layout">
+          <div class="tm-company-form-panel">
+
+            {# ── ETAPA 1 — Identidade da Vaga ─────────────────────── #}
+            <div class="tm-google-wizard-step is-active" data-wizard-step="1">
+              <header class="tm-google-card-header">
+                <span class="tm-google-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+                    <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+                    <path d="M10 9H8M16 13H8M16 17H8"/>
+                  </svg>
+                </span>
+                <div>
+                  <h2>Identidade da vaga</h2>
+                  <p>Um título claro e uma descrição atrativa ajudam a receber os melhores candidatos.</p>
+                </div>
+              </header>
+              {{ render_field(form.titulo) }}
+              {{ render_field(form.categoria) }}
+              {{ render_field(form.descricao) }}
+            </div>
+
+            {# ── ETAPA 2 — Local & Tipo ───────────────────────────── #}
+            {% set tipo_atual = form.tipo_vaga.data or 'diaria' %}
+            <div class="tm-google-wizard-step" data-wizard-step="2">
+              <header class="tm-google-card-header">
+                <span class="tm-google-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z"/>
+                    <circle cx="12" cy="9" r="2.5"/>
+                  </svg>
+                </span>
+                <div>
+                  <h2>Local & Tipo</h2>
+                  <p>Onde e como a vaga será realizada.</p>
+                </div>
+              </header>
+
+              <div class="columns is-variable is-5" style="align-items:flex-start;margin-top:0;margin-bottom:0;">
+
+                {# Esquerda: Região + Disponibilidade #}
+                <div class="column" style="margin-bottom:0;">
+                  <div class="field" style="margin-bottom:1rem;">
+                    {{ form.regiao.label(class="label") }}
+                    <div class="tm-location-row">
+                      <div class="control tm-location-input">
+                        {{ form.regiao(class="input", id="vf_regiao", autocomplete="off", placeholder="Ex: Vitória, Serra, Vila Velha…") }}
+                      </div>
+                      <button type="button" class="button tm-loc-btn-sm" id="vf_loc_btn" title="Detectar minha localização" aria-label="Detectar localização">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z"/>
+                          <circle cx="12" cy="9" r="2.5"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="tm-autocomplete-list" id="vf_regiao_sugs"></div>
+                    {% for error in form.regiao.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="field">
+                    {{ form.disponibilidade.label(class="label") }}
+                    <div class="control">
+                      <div class="select is-fullwidth tm-native-select-wrap tm-vf-three-option-select">
+                        {{ form.disponibilidade(class="tm-custom-select-native") }}
+                      </div>
+                    </div>
+                    {% for error in form.disponibilidade.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+
+                {# Direita: Tipo de vaga (lista vertical) #}
+                <div class="column" style="margin-bottom:0;">
+                  <div class="field" style="margin-bottom:0;">
+                    <label class="label">Tipo de vaga</label>
+                    {{ form.tipo_vaga(style="display:none", id="input_tipo_vaga") }}
+                    <div class="tm-vf-type-list">
+                      <div class="tm-vf-type-card {% if tipo_atual == 'diaria' %}is-selected{% endif %}" data-value="diaria" role="button" tabindex="0">
+                        <div class="tm-vf-type-card-icon">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/></svg>
+                        </div>
+                        <div class="tm-vf-type-card-texts">
+                          <span class="tm-vf-type-card-label">Diária</span>
+                          <span class="tm-vf-type-card-sub">Por dia de trabalho</span>
+                        </div>
+                      </div>
+                      <div class="tm-vf-type-card {% if tipo_atual == 'temporario' %}is-selected{% endif %}" data-value="temporario" role="button" tabindex="0">
+                        <div class="tm-vf-type-card-icon">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <div class="tm-vf-type-card-texts">
+                          <span class="tm-vf-type-card-label">Temporário</span>
+                          <span class="tm-vf-type-card-sub">Prazo determinado</span>
+                        </div>
+                      </div>
+                      <div class="tm-vf-type-card {% if tipo_atual == 'contrato' %}is-selected{% endif %}" data-value="contrato" role="button" tabindex="0">
+                        <div class="tm-vf-type-card-icon">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/></svg>
+                        </div>
+                        <div class="tm-vf-type-card-texts">
+                          <span class="tm-vf-type-card-label">Contrato</span>
+                          <span class="tm-vf-type-card-sub">Contratação formal</span>
+                        </div>
+                      </div>
+                    </div>
+                    {% for error in form.tipo_vaga.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {# ── ETAPA 3 — Perfil Desejado ────────────────────────── #}
+            <div class="tm-google-wizard-step" data-wizard-step="3">
+              <header class="tm-google-card-header">
+                <span class="tm-google-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </span>
+                <div>
+                  <h2>Perfil desejado</h2>
+                  <p>Habilidades, nível de experiência e período de atuação.</p>
+                </div>
+              </header>
+
+              {# Status e nível — selects compactos na mesma linha #}
+              <div class="tm-vf-status-level-grid">
+                <div class="field">
+                  {{ form.status.label(class="label") }}
+                  <div class="control">
+                    <div class="select is-fullwidth tm-native-select-wrap">
+                      {{ form.status(class="tm-custom-select-native", id="input_status") }}
+                    </div>
+                  </div>
+                  {% for error in form.status.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="field">
+                  {{ form.complexidade.label(class="label") }}
+                  <div class="control">
+                    <div class="select is-fullwidth tm-native-select-wrap">
+                      {{ form.complexidade(class="tm-custom-select-native") }}
+                    </div>
+                  </div>
+                  {% for error in form.complexidade.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+
+              {# Período e remuneração — compactos para caberem lado a lado #}
+              <div class="tm-vf-profile-grid">
+                <div class="field tm-vf-compact-group">
+                  <label class="label">Período</label>
+                  <div class="tm-vf-compact-row">
+                    <div class="field">
+                      {{ form.data_inicio.label(class="label") }}
+                      <div class="control">{{ form.data_inicio(class="input") }}</div>
+                      {% for error in form.data_inicio.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="field">
+                      {{ form.data_fim.label(class="label") }}
+                      <div class="control">{{ form.data_fim(class="input") }}</div>
+                      {% for error in form.data_fim.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                    </div>
+                  </div>
+                  <p class="tm-vf-compact-help">Datas são opcionais.</p>
+                </div>
+                <div class="field tm-vf-compact-group">
+                  <label class="label">Salário</label>
+                  <div class="tm-vf-compact-row">
+                    <div class="field">
+                      {{ form.valor_min.label(class="label") }}
+                      <div class="control">{{ form.valor_min(class="input", placeholder="Mínimo") }}</div>
+                      {% for error in form.valor_min.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="field">
+                      {{ form.valor_max.label(class="label") }}
+                      <div class="control">{{ form.valor_max(class="input", placeholder="Máximo") }}</div>
+                      {% for error in form.valor_max.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                    </div>
+                  </div>
+                  <p class="tm-vf-compact-help">Deixe em branco para combinar.</p>
+                </div>
+              </div>
+
+              {# Habilidades desejadas — tag-input + nav inline #}
+              <div class="field" style="margin-bottom:0">
+                <label class="label">Habilidades desejadas</label>
+                {{ form.habilidades_desejadas(style="display:none", id="input_habilidades") }}
+                <div class="tm-vf-skill-row">
+                  <div class="tm-vf-skill-combobox">
+                    <div class="tm-vf-skill-control">
+                      <div class="tm-vf-tag-input" id="vf_tag_box">
+                        <input type="text" id="vf_skill_input" placeholder="Buscar habilidade…" autocomplete="off">
+                      </div>
+                      <button type="button" class="button tm-vf-skill-add-btn" id="vf_skill_add_btn">+ Adicionar</button>
+                    </div>
+                    <div id="vf_skill_dropdown" class="tm-autocomplete-list" style="display:none;position:absolute;left:0;right:0;z-index:20;"></div>
+                  </div>
+                </div>
+                <div class="tm-vf-step-inline-actions">
+                  <button type="button" class="button tm-btn-outline" id="vf-s3-prev" style="flex-shrink:0">← Voltar</button>
+                  <button type="button" class="button tm-btn-primary" id="vf-s3-next" style="flex-shrink:0">Avançar →</button>
+                </div>
+                {% for error in form.habilidades_desejadas.errors %}<p class="help is-danger" style="margin-top:0.5rem">{{ error }}</p>{% endfor %}
+              </div>
+            </div>
+
+            {# ── ETAPA 4 — Revisão Final ──────────────────────────── #}
+            <div class="tm-google-wizard-step" data-wizard-step="4">
+              <header class="tm-google-card-header">
+                <span class="tm-google-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </span>
+                <div>
+                  <h2>Revisão final</h2>
+                  <p>Revise os dados principais antes de publicar.</p>
+                </div>
+              </header>
+
+              <div class="tm-vf-confirmation">
+                <div class="tm-vf-confirm-main">
+                  <article class="tm-vf-confirm-card">
+                    <span class="tm-vf-confirm-eyebrow">
+                      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/></svg>
+                      Prévia da vaga
+                    </span>
+                    <div class="tm-vf-confirm-job-head">
+                      <span class="tm-vf-confirm-job-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M12 12v2M11 14h2"/></svg>
+                      </span>
+                      <div>
+                        <div class="tm-vf-confirm-title-row">
+                          <h3 id="preview-vaga-titulo">—</h3>
+                          <span class="tm-vf-confirm-status" id="preview-vaga-status">—</span>
+                        </div>
+                        <span class="tm-vf-confirm-location">
+                          <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                          <span id="preview-vaga-regiao">—</span>
+                        </span>
+                      </div>
+                    </div>
+                    <p class="tm-vf-confirm-desc" id="preview-vaga-descricao">—</p>
+
+                    <div class="tm-vf-confirm-facts">
+                      <div class="tm-vf-confirm-fact">
+                        <span class="tm-vf-confirm-icon"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h7"/></svg></span>
+                        <div><span>Categoria</span><strong id="preview-vaga-categoria">—</strong></div>
+                      </div>
+                      <div class="tm-vf-confirm-fact">
+                        <span class="tm-vf-confirm-icon"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+                        <div><span>Tipo</span><strong id="preview-vaga-tipo">—</strong></div>
+                      </div>
+                      <div class="tm-vf-confirm-fact">
+                        <span class="tm-vf-confirm-icon"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+                        <div><span>Disponibilidade</span><strong id="preview-vaga-disponibilidade">—</strong></div>
+                      </div>
+                      <div class="tm-vf-confirm-fact">
+                        <span class="tm-vf-confirm-icon"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                        <div><span>Remuneração</span><strong id="preview-vaga-valor">—</strong></div>
+                      </div>
+                      <div class="tm-vf-confirm-fact">
+                        <span class="tm-vf-confirm-icon"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
+                        <div><span>Nível</span><strong id="preview-vaga-complexidade">—</strong></div>
+                      </div>
+                      <div class="tm-vf-confirm-fact">
+                        <span class="tm-vf-confirm-icon"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01"/></svg></span>
+                        <div><span>Período</span><strong id="preview-vaga-periodo">—</strong></div>
+                      </div>
+                    </div>
+
+                    <p class="tm-vf-confirm-skills-title">Habilidades desejadas</p>
+                    <div class="tm-vf-preview-skills" id="preview-vaga-habilidades">
+                      <span class="tm-vf-preview-empty">Nenhuma habilidade adicionada</span>
+                    </div>
+                  </article>
+                </div>
+
+                <aside class="tm-vf-confirm-side">
+                  <section class="tm-vf-confirm-card">
+                    <h4>Checklist da publicação</h4>
+                    <div class="tm-vf-confirm-checklist">
+                      <div class="tm-vf-confirm-check">
+                        <span class="tm-vf-confirm-check-icon"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span>
+                        <div><strong>Dados da vaga preenchidos</strong><span>Título, descrição e tipo definidos.</span></div>
+                      </div>
+                      <div class="tm-vf-confirm-check">
+                        <span class="tm-vf-confirm-check-icon"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span>
+                        <div><strong>Localização definida</strong><span id="confirm-check-regiao">Região informada.</span></div>
+                      </div>
+                      <div class="tm-vf-confirm-check">
+                        <span class="tm-vf-confirm-check-icon"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span>
+                        <div><strong>Perfil desejado configurado</strong><span id="confirm-check-perfil">Nível e habilidades definidos.</span></div>
+                      </div>
+                      <div class="tm-vf-confirm-check" id="confirm-check-remuneracao">
+                        <span class="tm-vf-confirm-check-icon"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg></span>
+                        <div><strong id="confirm-check-remuneracao-title">Remuneração</strong><span id="confirm-check-remuneracao-text">Recomendamos informar para atrair mais candidatos.</span></div>
+                      </div>
+                    </div>
+                  </section>
+                </aside>
+              </div>
+
+              {# Navegação da etapa de confirmação #}
+              <div class="tm-vf-review-nav">
+                <button type="button" class="button tm-btn-outline" id="vf-review-back">
+                  <span aria-hidden="true">←</span>
+                  Voltar
+                </button>
+                {{ form.submit(class="button tm-btn-primary", value="Publicar vaga") }}
+              </div>
+            </div>
+
+            {# Botões de navegação (etapas 1–3) #}
+            <div class="tm-google-wizard-actions tm-company-actions">
+              <button type="button" class="button tm-btn-outline" data-wizard-prev disabled>
+                <span aria-hidden="true">←</span>
+                Voltar
+              </button>
+              <button type="button" class="button tm-btn-primary" data-wizard-next>
+                Avançar
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function () {
+  'use strict';
+
+  var REGIOES = {{ regioes|tojson }};
+  var COORDS  = {{ coordenadas_regioes|tojson }};
+
+  // ── Autocomplete de região ─────────────────────────────────────────
+  var regiaoInput = document.getElementById('vf_regiao');
+  var regiaoCont  = document.getElementById('vf_regiao_sugs');
+
+  function showRegioSugs(list) {
+    regiaoCont.innerHTML = '';
+    list.slice(0, 6).forEach(function (r) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tm-suggestion-chip';
+      btn.textContent = r;
+      btn.addEventListener('click', function () {
+        regiaoInput.value = r;
+        regiaoCont.innerHTML = '';
+        regiaoInput.focus();
+      });
+      regiaoCont.appendChild(btn);
+    });
+  }
+
+  if (regiaoInput) {
+    regiaoInput.addEventListener('input', function () {
+      var q = this.value.trim().toLowerCase();
+      if (!q) { regiaoCont.innerHTML = ''; return; }
+      showRegioSugs(REGIOES.filter(function (r) { return r.toLowerCase().includes(q); }));
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    if (regiaoInput && regiaoCont &&
+        !regiaoInput.contains(e.target) &&
+        !regiaoCont.contains(e.target)) {
+      regiaoCont.innerHTML = '';
+    }
+  });
+
+  // ── Geolocalização ─────────────────────────────────────────────────
+  function closestRegion(lat, lng) {
+    var best = null, bestDist = Infinity;
+    Object.entries(COORDS).forEach(function (entry) {
+      var d = Math.hypot(entry[1].lat - lat, entry[1].lng - lng);
+      if (d < bestDist) { bestDist = d; best = entry[0]; }
+    });
+    return best;
+  }
+
+  var locBtn = document.getElementById('vf_loc_btn');
+  if (locBtn) {
+    locBtn.addEventListener('click', function () {
+      if (!navigator.geolocation) return;
+      locBtn.classList.add('is-loading');
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var r = closestRegion(pos.coords.latitude, pos.coords.longitude);
+        if (r && regiaoInput) { regiaoInput.value = r; regiaoCont.innerHTML = ''; }
+        locBtn.classList.remove('is-loading');
+      }, function () {
+        locBtn.classList.remove('is-loading');
+      }, { timeout: 8000 });
+    });
+  }
+
+  // ── Card pickers (tipo_vaga) ───────────────────────────────────────
+  function initCardPicker(selector, selectId) {
+    var cards  = document.querySelectorAll(selector);
+    var select = document.getElementById(selectId);
+    if (!select || !cards.length) return;
+    cards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        cards.forEach(function (c) { c.classList.remove('is-selected'); });
+        card.classList.add('is-selected');
+        select.value = card.dataset.value;
+      });
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+      });
+    });
+  }
+
+  initCardPicker('.tm-vf-type-card',   'input_tipo_vaga');
+
+  // ── Habilidades desejadas — autocomplete + fuzzy match + AJAX save ──
+  var HABILIDADES     = {{ habilidades_predefinidas|tojson }};
+  var habilidadesInput = document.getElementById('input_habilidades');
+  var tagBox           = document.getElementById('vf_tag_box');
+  var skillInput       = document.getElementById('vf_skill_input');
+  var skillAddBtn      = document.getElementById('vf_skill_add_btn');
+  var skillDropdown    = document.getElementById('vf_skill_dropdown');
+  var skills           = new Set();
+
+  if (tagBox) {
+    tagBox.addEventListener('click', function () { if (skillInput) skillInput.focus(); });
+  }
+
+  function normalizar(s) {
+    var nfd = s.toLowerCase().normalize('NFD'), r = '';
+    for (var i = 0; i < nfd.length; i++) { var c = nfd.charCodeAt(i); if (c < 0x300 || c > 0x36f) r += nfd[i]; }
+    return r.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function distanciaLeve(a, b) {
+    if (!a || !b) return Math.max(a.length, b.length);
+    var anterior = [];
+    for (var j = 0; j <= b.length; j++) anterior[j] = j;
+    for (var i = 1; i <= a.length; i++) {
+      var atual = [i];
+      for (var k = 1; k <= b.length; k++) {
+        var custo = a[i - 1] === b[k - 1] ? 0 : 1;
+        atual[k] = Math.min(
+          anterior[k] + 1,
+          atual[k - 1] + 1,
+          anterior[k - 1] + custo
+        );
+      }
+      anterior = atual;
+    }
+    return anterior[b.length];
+  }
+
+  function ehSubsequencia(agulha, texto) {
+    var pos = 0;
+    for (var i = 0; i < texto.length && pos < agulha.length; i++) {
+      if (texto[i] === agulha[pos]) pos++;
+    }
+    return pos === agulha.length;
+  }
+
+  function pontuarHabilidade(habilidade, consulta) {
+    var h = normalizar(habilidade);
+    var q = normalizar(consulta);
+    if (!q) return -1;
+    if (h === q) return 100;
+    if (h.startsWith(q)) return 90;
+    if (h.split(' ').some(function (parte) { return parte.startsWith(q); })) return 82;
+    if (h.includes(q)) return 74;
+    if (q.length >= 3 && ehSubsequencia(q, h)) return 58;
+
+    var partes = h.split(' ');
+    var menorDistancia = Math.min.apply(null, partes.concat([h]).map(function (parte) {
+      return distanciaLeve(q, parte.slice(0, Math.max(q.length, parte.length)));
+    }));
+    if (q.length >= 4 && menorDistancia <= 2) return 46 - menorDistancia;
+    return -1;
+  }
+
+  function encontrarSimilar(q) {
+    var qn = normalizar(q);
+    if (!qn) return null;
+    for (var i = 0; i < HABILIDADES.length; i++) {
+      if (normalizar(HABILIDADES[i]) === qn) return HABILIDADES[i];
+    }
+    for (var i = 0; i < HABILIDADES.length; i++) {
+      var hn = normalizar(HABILIDADES[i]);
+      if (hn.startsWith(qn) || qn.startsWith(hn)) return HABILIDADES[i];
+    }
+    for (var i = 0; i < HABILIDADES.length; i++) {
+      if (normalizar(HABILIDADES[i]).includes(qn)) return HABILIDADES[i];
+    }
+    return null;
+  }
+
+  function filtrarHabilidades(q) {
+    var qn = normalizar(q);
+    if (!qn) return [];
+    var selecionadas = Array.from(skills).map(normalizar);
+    return HABILIDADES
+      .map(function (h) {
+        return { nome: h, score: pontuarHabilidade(h, qn) };
+      })
+      .filter(function (item) {
+        return item.score >= 0 && !selecionadas.includes(normalizar(item.nome));
+      })
+      .sort(function (a, b) {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.nome.localeCompare(b.nome);
+      })
+      .slice(0, 7);
+  }
+
+  function renderTags() {
+    if (!tagBox) return;
+    Array.from(tagBox.querySelectorAll('.tm-vf-tag-chip')).forEach(function (c) { c.remove(); });
+    skills.forEach(function (s) {
+      var chip = document.createElement('span');
+      chip.className = 'tm-vf-tag-chip';
+      chip.appendChild(document.createTextNode(s));
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = '×';
+      btn.setAttribute('aria-label', 'Remover ' + s);
+      (function (skill) {
+        btn.addEventListener('click', function (e) { e.stopPropagation(); skills.delete(skill); syncSkills(); });
+      })(s);
+      chip.appendChild(btn);
+      tagBox.insertBefore(chip, skillInput || null);
+    });
+    if (skillInput) skillInput.placeholder = skills.size > 0 ? '' : 'Buscar habilidade…';
+  }
+
+  function syncSkills() {
+    if (habilidadesInput) habilidadesInput.value = Array.from(skills).join(', ');
+    renderTags();
+  }
+
+  function addSkill(name) {
+    var s = name.trim();
+    if (!s) return;
+    var similar = encontrarSimilar(s);
+    if (similar) {
+      skills.add(similar);
+      syncSkills();
+    } else {
+      skills.add(s);
+      HABILIDADES.push(s);
+      syncSkills();
+      fetch('{{ url_for("contratante.nova_habilidade") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': (document.querySelector('[name="csrf_token"]') || {}).value || ''
+        },
+        body: JSON.stringify({ nome: s })
+      }).then(function (r) { return r.json(); }).then(function (data) {
+        if (data.nome && data.nome !== s) {
+          skills.delete(s);
+          skills.add(data.nome);
+          var idx = HABILIDADES.indexOf(s);
+          if (idx !== -1) HABILIDADES.splice(idx, 1);
+          if (!HABILIDADES.includes(data.nome)) HABILIDADES.push(data.nome);
+          syncSkills();
+        }
+      }).catch(function () {});
+    }
+  }
+
+  if (habilidadesInput && habilidadesInput.value.trim()) {
+    habilidadesInput.value.split(',').forEach(function (s) {
+      var t = s.trim(); if (t) skills.add(t);
+    });
+    syncSkills();
+  }
+
+  function showDropdown(suggestions, term) {
+    if (!skillDropdown) return;
+    skillDropdown.innerHTML = '';
+    var consulta = (term || '').trim();
+    if (!suggestions.length && !consulta) { skillDropdown.style.display = 'none'; return; }
+    suggestions.forEach(function (sugestao) {
+      var s = sugestao.nome || sugestao;
+      var botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'tm-vf-skill-option';
+      botao.innerHTML = '<span class="tm-vf-skill-option-title">' + escHtml(s) + '</span><span class="tm-vf-skill-option-meta">sugerida</span>';
+      botao.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        skills.add(s);
+        syncSkills();
+        skillInput.value = '';
+        skillDropdown.style.display = 'none';
+      });
+      skillDropdown.appendChild(botao);
+    });
+
+    var existeExata = HABILIDADES.some(function (h) { return normalizar(h) === normalizar(consulta); });
+    var jaSelecionada = Array.from(skills).some(function (h) { return normalizar(h) === normalizar(consulta); });
+    if (consulta && !existeExata && !jaSelecionada) {
+      var criar = document.createElement('button');
+      criar.type = 'button';
+      criar.className = 'tm-vf-skill-option is-create';
+      criar.innerHTML = '<span class="tm-vf-skill-option-title">Adicionar "' + escHtml(consulta) + '"</span><span class="tm-vf-skill-option-meta">nova</span>';
+      criar.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        addSkill(consulta);
+        skillInput.value = '';
+        skillDropdown.style.display = 'none';
+      });
+      skillDropdown.appendChild(criar);
+    }
+
+    if (!skillDropdown.children.length) { skillDropdown.style.display = 'none'; return; }
+    skillDropdown.style.display = 'flex';
+  }
+
+  if (skillInput) {
+    skillInput.addEventListener('input', function () {
+      showDropdown(this.value.trim() ? filtrarHabilidades(this.value.trim()) : [], this.value.trim());
+    });
+    skillInput.addEventListener('blur', function () {
+      setTimeout(function () { if (skillDropdown) skillDropdown.style.display = 'none'; }, 150);
+    });
+    skillInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var v = skillInput.value.trim();
+        if (v) { addSkill(v); skillInput.value = ''; skillDropdown.style.display = 'none'; }
+      }
+    });
+  }
+
+  if (skillAddBtn) {
+    skillAddBtn.addEventListener('click', function () {
+      if (skillInput && skillInput.value.trim()) {
+        addSkill(skillInput.value);
+        skillInput.value = '';
+        if (skillDropdown) skillDropdown.style.display = 'none';
+        skillInput.focus();
+      }
+    });
+  }
+
+  // ── Wizard ─────────────────────────────────────────────────────────
+  var wizardSteps  = Array.from(document.querySelectorAll('[data-wizard-step]'));
+  var indicators   = Array.from(document.querySelectorAll('[data-step-indicator]'));
+  var stepSummary  = document.getElementById('vf-step-name');
+  var stepNumEl    = document.getElementById('vf-step-num');
+  var progressFill = document.getElementById('vf-progress-fill');
+  var prevButton   = document.querySelector('[data-wizard-prev]');
+  var nextButton   = document.querySelector('[data-wizard-next]');
+  var actionsDiv   = document.querySelector('.tm-google-wizard-actions');
+  var reviewBack   = document.getElementById('vf-review-back');
+  var activeStep   = 1;
+
+  var TOTAL        = wizardSteps.length;
+  var STEP_NAMES   = ['Identidade da vaga', 'Local & tipo', 'Perfil desejado', 'Revisão final'];
+  var PROGRESS     = [25, 50, 75, 100];
+  var TIPO_LABELS  = { diaria: 'Diária', temporario: 'Temporário', contrato: 'Contrato' };
+  var COMPLEX_LABELS = { '20': 'Simples', '45': 'Moderada', '70': 'Alta', '90': 'Especializada' };
+  var STATUS_LABELS  = { aberta: 'Aberta', encerrada: 'Encerrada' };
+
+  function showStep(step) {
+    activeStep = step;
+
+    wizardSteps.forEach(function (item) {
+      item.classList.toggle('is-active', Number(item.dataset.wizardStep) === step);
+    });
+
+    indicators.forEach(function (item) {
+      var n = Number(item.dataset.stepIndicator);
+      item.classList.toggle('is-active',   n === step);
+      item.classList.toggle('is-complete', n < step);
+    });
+
+    if (progressFill) progressFill.style.width = PROGRESS[step - 1] + '%';
+    if (stepNumEl)    stepNumEl.textContent = step;
+    if (stepSummary)  stepSummary.textContent = STEP_NAMES[step - 1] || '';
+    if (prevButton)   prevButton.disabled = step === 1;
+    if (actionsDiv)   actionsDiv.classList.toggle('is-hidden', step === TOTAL || step === 3);
+
+    if (step === TOTAL) {
+      populateReview();
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      document.documentElement.classList.add('tm-vf-review-lock');
+      document.body.classList.add('tm-vf-review-lock');
+    } else {
+      document.documentElement.classList.remove('tm-vf-review-lock');
+      document.body.classList.remove('tm-vf-review-lock');
+    }
+  }
+
+  function validateStep(step) {
+    if (step === 1) {
+      var titulo = document.querySelector('[name="titulo"]');
+      var categ  = document.querySelector('[name="categoria"]');
+      var descr  = document.querySelector('[name="descricao"]');
+      if (!titulo || !titulo.value.trim()) {
+        flashError(titulo, 'O título da vaga é obrigatório.');
+        return false;
+      }
+      if (!categ || !categ.value) {
+        flashError(categ, 'Selecione a categoria da vaga.');
+        return false;
+      }
+      if (!descr || !descr.value.trim()) {
+        flashError(descr, 'A descrição da vaga é obrigatória.');
+        return false;
+      }
+    } else if (step === 2) {
+      var regiao = document.getElementById('vf_regiao');
+      if (!regiao || !regiao.value.trim()) {
+        if (regiao) regiao.focus();
+        flashError(regiao, 'Informe a região da vaga.');
+        return false;
+      }
+    } else if (step === 3) {
+      var habs = document.getElementById('input_habilidades');
+      if (!habs || !habs.value.trim()) {
+        var inp = document.getElementById('vf_skill_input');
+        if (inp) inp.focus();
+        flashError(inp || habs, 'Adicione pelo menos uma habilidade desejada.');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function flashError(field, msg) {
+    if (!field) return;
+    var parent = field.closest('.field') || field.parentElement;
+    if (!parent || parent.querySelector('.tm-vf-js-err')) return;
+    var p = document.createElement('p');
+    p.className = 'help is-danger tm-vf-js-err';
+    p.textContent = msg;
+    parent.appendChild(p);
+    if (field.tagName === 'INPUT' || field.tagName === 'TEXTAREA') field.focus();
+    setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 3000);
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    var p = d.split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : d;
+  }
+
+  function set(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function populateReview() {
+    var titulo  = (document.querySelector('[name="titulo"]')?.value || '').trim() || '—';
+    var descr   = (document.querySelector('[name="descricao"]')?.value || '').trim() || '—';
+    var regiao  = (document.getElementById('vf_regiao')?.value || '').trim() || '—';
+    var categEl = document.querySelector('[name="categoria"]');
+    var categ   = categEl ? (categEl.selectedOptions?.[0]?.text || '—') : '—';
+    if (!categEl || !categEl.value) categ = '—';
+
+    var tipoSel    = document.getElementById('input_tipo_vaga');
+    var dispSel    = document.querySelector('[name="disponibilidade"]');
+    var complexSel = document.getElementById('complexidade');
+    var statusSel  = document.getElementById('input_status');
+    var valorMinEl = document.querySelector('[name="valor_min"]');
+    var valorMaxEl = document.querySelector('[name="valor_max"]');
+    var dataInEl   = document.querySelector('[name="data_inicio"]');
+    var dataFmEl   = document.querySelector('[name="data_fim"]');
+    var habsVal    = document.getElementById('input_habilidades')?.value || '';
+
+    var tipo    = tipoSel    ? (TIPO_LABELS[tipoSel.value]                         || tipoSel.value)    : '—';
+    var disp    = dispSel    ? (dispSel.selectedOptions?.[0]?.text                 || '—')              : '—';
+    var complex = complexSel ? (complexSel.selectedOptions?.[0]?.text              || '—')              : '—';
+    var status  = statusSel  ? (STATUS_LABELS[statusSel.value]                     || '—')              : '—';
+    var dispTxt = (!disp || disp.trim() === '' || disp === '-') ? 'Não informado' : disp;
+
+    set('preview-vaga-titulo',         titulo);
+    set('preview-vaga-descricao',      descr);
+    set('preview-vaga-regiao',         regiao);
+    set('preview-vaga-categoria',      categ);
+    set('preview-vaga-tipo',           tipo);
+    set('preview-vaga-disponibilidade', dispTxt);
+    set('preview-vaga-complexidade',   complex);
+    set('confirm-check-regiao',         regiao === '—' ? 'Região informada.' : regiao);
+    set('confirm-check-perfil',         complex + ' com ' + (habsVal ? 'habilidades definidas.' : 'habilidades pendentes.'));
+
+    var dataIn = dataInEl?.value;
+    var dataFm = dataFmEl?.value;
+    var periodo = '—';
+    if (dataIn && dataFm)     periodo = fmtDate(dataIn) + ' → ' + fmtDate(dataFm);
+    else if (dataIn)          periodo = 'A partir de ' + fmtDate(dataIn);
+    else if (dataFm)          periodo = 'Até ' + fmtDate(dataFm);
+    set('preview-vaga-periodo', periodo);
+
+    var vMin = valorMinEl?.value ? parseFloat(valorMinEl.value) : null;
+    var vMax = valorMaxEl?.value ? parseFloat(valorMaxEl.value) : null;
+    var fmt  = function (v) { return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 }); };
+    var valor = 'Não informado';
+    if (vMin !== null && vMax !== null) valor = fmt(vMin) + ' – ' + fmt(vMax);
+    else if (vMin !== null)             valor = 'A partir de ' + fmt(vMin);
+    else if (vMax !== null)             valor = 'Até ' + fmt(vMax);
+    set('preview-vaga-valor', valor);
+    set('confirm-check-remuneracao-title', valor === 'Não informado' ? 'Remuneração não informada' : 'Remuneração informada');
+    set('confirm-check-remuneracao-text', valor === 'Não informado' ? 'Recomendamos informar para atrair mais candidatos.' : valor);
+
+    var remunCheck = document.getElementById('confirm-check-remuneracao');
+    if (remunCheck) {
+      remunCheck.classList.toggle('is-warning', valor === 'Não informado');
+    }
+
+    var statusEl = document.getElementById('preview-vaga-status');
+    if (statusEl) {
+      statusEl.textContent       = status;
+      var isAberta               = statusSel && statusSel.value === 'aberta';
+      statusEl.style.cssText     = [
+        'background:'    + (isAberta ? '#dcfce7' : '#fee2e2'),
+        'color:'         + (isAberta ? '#15803d' : '#dc2626'),
+        'border:1px solid ' + (isAberta ? '#bbf7d0' : '#fecaca'),
+        'border-radius:999px',
+        'font-size:0.72rem',
+        'font-weight:600',
+        'padding:0.18rem 0.5rem',
+        'display:inline-block',
+      ].join(';');
+    }
+
+    var skillsEl = document.getElementById('preview-vaga-habilidades');
+    if (skillsEl) {
+      var tags = habsVal.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      skillsEl.innerHTML = tags.length
+        ? tags.map(function (t) { return '<span class="tm-vf-preview-skill-tag">' + escHtml(t) + '</span>'; }).join('')
+        : '<span class="tm-vf-preview-empty">Nenhuma habilidade adicionada</span>';
+    }
+  }
+
+  function findFirstErrorStep() {
+    var steps = document.querySelectorAll('[data-wizard-step]');
+    for (var i = 0; i < steps.length; i++) {
+      if (steps[i].querySelector('.help.is-danger')) {
+        return Number(steps[i].dataset.wizardStep);
+      }
+    }
+    return 1;
+  }
+
+  if (wizardSteps.length) {
+    showStep(findFirstErrorStep());
+
+    nextButton && nextButton.addEventListener('click', function () {
+      if (validateStep(activeStep) && activeStep < TOTAL) {
+        showStep(activeStep + 1);
+      }
+    });
+
+    prevButton && prevButton.addEventListener('click', function () {
+      if (activeStep > 1) showStep(activeStep - 1);
+    });
+
+    reviewBack && reviewBack.addEventListener('click', function () {
+      if (activeStep > 1) showStep(activeStep - 1);
+    });
+
+    var s3Prev = document.getElementById('vf-s3-prev');
+    var s3Next = document.getElementById('vf-s3-next');
+    s3Prev && s3Prev.addEventListener('click', function () {
+      if (activeStep > 1) showStep(activeStep - 1);
+    });
+    s3Next && s3Next.addEventListener('click', function () {
+      if (validateStep(activeStep) && activeStep < TOTAL) showStep(activeStep + 1);
+    });
+  }
+
+}());
+</script>
+{% endblock %}

@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block title %}Candidatos curtidos — TrampoMatch{% endblock %}
+
+{% macro candidato_modal(item, color) %}
+<div class="modal tm-detalhe-modal tm-ios-modal" id="modal-{{ item.usuario.id }}-{{ item.vaga_id or 'sv' }}">
+  <div class="modal-background tm-modal-bg"></div>
+  <div class="tm-ios-modal-card">
+    <div class="tm-ios-modal-handle"></div>
+
+    <div class="tm-ios-modal-hero">
+      <div class="tm-ios-modal-avatar" style="background:{{ color }}">{{ item.usuario.nome[0].upper() }}</div>
+      <div class="tm-ios-modal-hero-text">
+        <h2 class="tm-ios-modal-name">{{ item.usuario.nome }}</h2>
+        {% if item.perfil %}
+        <p class="tm-ios-modal-submeta">
+          {{ item.perfil.tipo_trabalho|capitalize }}{% if item.perfil.regiao %} · {{ item.perfil.regiao }}{% endif %}
+        </p>
+        {% endif %}
+        {% if item.match %}
+          <span class="tm-ios-match-pill tm-ios-match-pill--match">Match!</span>
+        {% elif item.score is not none %}
+          <span class="tm-ios-match-pill">{{ item.score|int }}% Match</span>
+        {% endif %}
+      </div>
+      <button class="tm-ios-modal-close tm-modal-fechar" type="button" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="tm-ios-modal-body">
+      <p class="tm-ios-section-title">Informações</p>
+      <div class="tm-ios-info-group">
+        <div class="tm-ios-info-row">
+          <span class="tm-ios-info-icon tm-ios-info-icon--blue">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </span>
+          <div class="tm-ios-info-text">
+            <span class="tm-ios-info-label">E-mail</span>
+            <strong class="tm-ios-info-value">{{ item.usuario.email }}</strong>
+          </div>
+        </div>
+        <div class="tm-ios-info-row">
+          <span class="tm-ios-info-icon tm-ios-info-icon--green">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+          </span>
+          <div class="tm-ios-info-text">
+            <span class="tm-ios-info-label">Membro desde</span>
+            <strong class="tm-ios-info-value">{{ item.usuario.criado_em.strftime('%d/%m/%Y') if item.usuario.criado_em else '—' }}</strong>
+          </div>
+        </div>
+        <div class="tm-ios-info-row">
+          <span class="tm-ios-info-icon tm-ios-info-icon--blue">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          </span>
+          <div class="tm-ios-info-text">
+            <span class="tm-ios-info-label">Currículo</span>
+            {% if item.perfil and item.perfil.curriculo_arquivo %}
+              <button
+                class="tm-ios-info-value tm-cv-inline-link tm-cv-inline-button"
+                type="button"
+                data-cv-viewer-open
+                data-cv-view-url="{{ url_for('contratante.visualizar_curriculo_candidato', id=item.usuario.id) }}"
+                data-cv-download-url="{{ url_for('contratante.baixar_curriculo_candidato', id=item.usuario.id) }}"
+                data-cv-name="{{ item.perfil.curriculo_nome_original or 'curriculo' }}"
+              >{{ item.perfil.curriculo_nome_original or 'Ver currículo' }}</button>
+            {% else %}
+              <strong class="tm-ios-info-value" style="color:var(--text-muted);font-weight:500">Currículo não enviado</strong>
+            {% endif %}
+          </div>
+        </div>
+        {% if item.perfil %}
+        <div class="tm-ios-info-row">
+          <span class="tm-ios-info-icon tm-ios-info-icon--orange">
+            <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+          </span>
+          <div class="tm-ios-info-text">
+            <span class="tm-ios-info-label">Experiência</span>
+            <strong class="tm-ios-info-value">{{ item.perfil.nivel_experiencia_rotulo }}</strong>
+          </div>
+        </div>
+        <div class="tm-ios-info-row">
+          <span class="tm-ios-info-icon tm-ios-info-icon--purple">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </span>
+          <div class="tm-ios-info-text">
+            <span class="tm-ios-info-label">Disponibilidade</span>
+            <strong class="tm-ios-info-value">{{ item.perfil.disponibilidade|capitalize }}</strong>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if item.perfil and item.perfil.experiencia_resumida %}
+      <p class="tm-ios-section-title">Sobre</p>
+      <div class="tm-ios-prose">{{ item.perfil.experiencia_resumida }}</div>
+      {% endif %}
+
+      {% if item.perfil %}
+        {% set skills = item.perfil.habilidades_lista() %}
+        {% if skills %}
+        <p class="tm-ios-section-title">Habilidades</p>
+        <div class="tm-ios-chips-row">
+          {% for h in skills %}<span class="tm-ios-chip">{{ h|capitalize }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      {% endif %}
+
+      {% if item.vaga %}
+      <p class="tm-ios-section-title">Vaga relacionada</p>
+      <div class="tm-ios-info-group">
+        <div class="tm-ios-info-row">
+          <span class="tm-ios-info-icon tm-ios-info-icon--blue">
+            <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+          </span>
+          <div class="tm-ios-info-text">
+            <span class="tm-ios-info-label">Vaga</span>
+            <strong class="tm-ios-info-value">{{ item.vaga.titulo }}</strong>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="tm-ios-modal-footer">
+      <form method="post" action="{{ url_for('contratante.remover_interesse_candidato', id=item.usuario.id) }}" style="flex:1">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="tm-ios-footer-btn tm-ios-footer-btn--danger" type="submit">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+          Remover interesse
+        </button>
+      </form>
+      <button class="tm-ios-footer-btn tm-modal-fechar" type="button" style="flex:1">Fechar</button>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+{% set avatar_colors = ['#007AFF','#34C759','#FF9500','#AF52DE','#FF3B30','#5AC8FA','#30B0C7','#FF6B35'] %}
+
+<section class="section tm-app-section tm-candidatos-curtidos-page">
+  <div class="container">
+
+    {# ── Cabeçalho ── #}
+    <div class="tm-section-header tm-reveal">
+      <div>
+        <span class="tm-eyebrow">Contratante</span>
+        <h1 class="tm-section-title">
+          Candidatos curtidos
+          {% if curtidos %}
+            <span class="tm-ios-count-badge">{{ curtidos|length }}</span>
+          {% endif %}
+        </h1>
+        <p class="tm-section-subtitle">Candidatos em que você demonstrou interesse, agrupados por vaga.</p>
+      </div>
+      <a class="button tm-btn-primary" href="{{ url_for('contratante.candidatos') }}">
+        <span class="tm-button-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </span>
+        Descobrir candidatos
+      </a>
+    </div>
+
+    {# ── Seções por vaga ── #}
+    {% if curtidos_por_vaga %}
+    <div class="tm-ios-list tm-reveal tm-d1">
+      {% for vaga_titulo, items in curtidos_por_vaga.items() %}
+
+      <div class="tm-ios-list-section">
+        <div class="tm-ios-list-header">
+          <span class="tm-ios-list-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/>
+            </svg>
+          </span>
+          <span class="tm-ios-list-header-title">{{ vaga_titulo }}</span>
+          <span class="tm-ios-list-header-count">{{ items|length }}</span>
+        </div>
+
+        <div class="tm-ios-list-body">
+          {% for item in items %}
+          {% set color = avatar_colors[loop.index0 % avatar_colors|length] %}
+
+          <div
+            class="tm-ios-row"
+            role="button"
+            tabindex="0"
+            data-target="modal-{{ item.usuario.id }}-{{ item.vaga_id or 'sv' }}"
+            aria-label="Ver detalhes de {{ item.usuario.nome }}"
+          >
+            <div class="tm-ios-row-avatar" style="background:{{ color }}">{{ item.usuario.nome[0].upper() }}</div>
+            <div class="tm-ios-row-body">
+              <div class="tm-ios-row-name">{{ item.usuario.nome }}</div>
+              <div class="tm-ios-row-meta">
+                {% if item.perfil %}
+                  {{ item.perfil.tipo_trabalho|capitalize }}{% if item.perfil.regiao %} · {{ item.perfil.regiao }}{% endif %}
+                {% else %}Perfil incompleto{% endif %}
+              </div>
+            </div>
+            <div class="tm-ios-row-right">
+              {% if item.match %}
+                <span class="tm-ios-match-pill tm-ios-match-pill--match">Match!</span>
+              {% elif item.score is not none %}
+                <span class="tm-ios-match-pill">{{ item.score|int }}%</span>
+              {% endif %}
+              <span class="tm-ios-chevron" aria-hidden="true">›</span>
+            </div>
+          </div>
+
+          {% endfor %}
+        </div>
+      </div>
+
+      {% endfor %}
+    </div>
+
+    <div class="tm-ios-modals-portal">
+      {% for vaga_titulo, items in curtidos_por_vaga.items() %}
+        {% for item in items %}
+          {% set color = avatar_colors[loop.index0 % avatar_colors|length] %}
+          {{ candidato_modal(item, color) }}
+        {% endfor %}
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="columns is-centered mt-3">
+      <div class="column is-two-thirds-desktop is-three-quarters-tablet">
+        <div class="tm-swipe-empty tm-reveal">
+          <h2>Nenhum candidato curtido ainda</h2>
+          <p>Quando você demonstrar interesse em um candidato, ele aparecerá aqui.</p>
+          <a class="button tm-btn-primary mt-4" href="{{ url_for('contratante.candidatos') }}">Descobrir candidatos</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Descartados ── #}
+    {% if descartados %}
+    <div class="tm-ios-list tm-reveal tm-d2" style="margin-top:2.5rem">
+      <div class="tm-ios-list-section">
+        <div class="tm-ios-list-header">
+          <span class="tm-ios-list-header-icon tm-ios-list-header-icon--muted">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
+            </svg>
+          </span>
+          <span class="tm-ios-list-header-title" style="color:var(--text-muted)">Descartados</span>
+          <span class="tm-ios-list-header-count tm-ios-list-header-count--muted">{{ descartados|length }}</span>
+        </div>
+        <div class="tm-ios-list-body">
+          {% for item in descartados %}
+          <div class="tm-ios-row tm-ios-row--no-pointer">
+            <div class="tm-ios-row-avatar tm-ios-row-avatar--muted">{{ item.usuario.nome[0].upper() }}</div>
+            <div class="tm-ios-row-body">
+              <div class="tm-ios-row-name" style="color:var(--text-muted);font-weight:500">{{ item.usuario.nome }}</div>
+              <div class="tm-ios-row-meta">
+                {% if item.perfil %}{{ item.perfil.tipo_trabalho|capitalize }} · {{ item.perfil.regiao }}{% else %}Perfil incompleto{% endif %}
+              </div>
+            </div>
+            <form method="post" action="{{ url_for('contratante.restaurar_candidato', id=item.usuario.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="tm-ios-restore-btn" type="submit">Restaurar</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="modal tm-detalhe-modal tm-cv-viewer-modal" id="modal-curriculo-visualizar">
+      <div class="modal-background tm-modal-bg"></div>
+      <div class="modal-card tm-cv-viewer-card">
+        <header class="modal-card-head tm-modal-head">
+          <div>
+            <p class="tm-modal-titulo" data-cv-viewer-title>Currículo</p>
+            <div class="tm-card-meta mt-1"><span>Pré-visualização do currículo do candidato</span></div>
+          </div>
+          <button class="delete is-medium tm-modal-fechar" aria-label="Fechar"></button>
+        </header>
+        <section class="modal-card-body tm-cv-viewer-body">
+          <iframe title="Visualização do currículo" data-cv-viewer-frame></iframe>
+          <div class="tm-cv-viewer-fallback" data-cv-viewer-fallback>
+            <strong>Pré-visualização indisponível para este formato.</strong>
+            <p>Baixe o currículo para abrir arquivos DOC ou DOCX.</p>
+          </div>
+        </section>
+        <footer class="modal-card-foot tm-modal-foot">
+          <a class="button tm-btn-outline" href="#" data-cv-viewer-download>Baixar currículo</a>
+          <button class="button tm-mv-btn-fechar tm-modal-fechar">Fechar</button>
+        </footer>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const DURACAO = 200;
+
+    document.querySelectorAll('.tm-ios-modals-portal .tm-ios-modal').forEach((modal) => {
+      document.body.appendChild(modal);
+    });
+
+    function fechar(modal) {
+      modal.classList.remove('is-active');
+      modal.classList.add('is-closing');
+      document.documentElement.classList.remove('is-clipped');
+      setTimeout(() => modal.classList.remove('is-closing'), DURACAO);
+    }
+
+    function abrir(modal) {
+      modal.classList.remove('is-closing');
+      modal.classList.add('is-active');
+      document.documentElement.classList.add('is-clipped');
+      const body = modal.querySelector('.tm-ios-modal-body');
+      if (body) body.scrollTop = 0;
+    }
+
+    function abrirVisualizadorCurriculo(button) {
+      const modal = document.getElementById('modal-curriculo-visualizar');
+      if (!modal) return;
+      const frame = modal.querySelector('[data-cv-viewer-frame]');
+      const fallback = modal.querySelector('[data-cv-viewer-fallback]');
+      const title = modal.querySelector('[data-cv-viewer-title]');
+      const download = modal.querySelector('[data-cv-viewer-download]');
+      const name = button.dataset.cvName || 'Currículo';
+      const viewUrl = button.dataset.cvViewUrl;
+      const downloadUrl = button.dataset.cvDownloadUrl || viewUrl;
+      const canPreview = name.toLowerCase().endsWith('.pdf');
+
+      if (title) title.textContent = name;
+      if (download) download.href = downloadUrl;
+      if (frame) {
+        frame.src = canPreview ? viewUrl : '';
+        frame.style.display = canPreview ? '' : 'none';
+      }
+      if (fallback) fallback.style.display = canPreview ? 'none' : '';
+      abrir(modal);
+    }
+
+    document.querySelectorAll('.tm-ios-row[data-target]').forEach(row => {
+      const abrirDetalhes = () => {
+        const modal = document.getElementById(row.dataset.target);
+        if (modal) abrir(modal);
+      };
+      row.addEventListener('click', e => { if (e.target.closest('button, a, form')) return; abrirDetalhes(); });
+      row.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault(); abrirDetalhes(); });
+    });
+
+    document.querySelectorAll('[data-cv-viewer-open]').forEach(button => {
+      button.addEventListener('click', () => abrirVisualizadorCurriculo(button));
+    });
+
+    document.querySelectorAll('.tm-modal-fechar, .tm-modal-bg').forEach(el => {
+      el.addEventListener('click', () => { const m = el.closest('.modal'); if (m) fechar(m); });
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      document.querySelectorAll('.modal.is-active').forEach(m => fechar(m));
+    });
+  });
+</script>
+{% endblock %}

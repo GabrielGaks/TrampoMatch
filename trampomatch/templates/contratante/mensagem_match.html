@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Mensagem do Match — TrampoMatch{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section tm-msg-match-page">
+  <div class="container tm-narrow-lg tm-msg-match-container">
+
+    {# ── Cabeçalho ── #}
+    <div class="tm-msg-match-head tm-reveal">
+      <a href="{{ url_for('contratante.matches') }}" class="tm-back-link">‹ Voltar para matches</a>
+      <h1 class="tm-section-title">Mensagem pós-match</h1>
+      <p class="tm-section-subtitle">Envie ao candidato as instruções finais de contato para encerrar o fluxo dentro do TrampoMatch.</p>
+    </div>
+
+    {# ── Formulário ── #}
+    <form method="post" novalidate class="tm-msg-form">
+      {{ form.csrf_token }}
+
+      <div class="tm-msg-form-grid tm-reveal tm-d1">
+
+        {# Hero candidato — coluna esquerda, linha 1 do grid #}
+        <div class="tm-msg-hero">
+          <div class="tm-msg-hero-avatar">{{ match.candidato.nome[0].upper() }}</div>
+          <div class="tm-msg-hero-body">
+            <p class="tm-msg-hero-label">Candidato</p>
+            <h2 class="tm-msg-hero-name">{{ match.candidato.nome }}</h2>
+            <div class="tm-msg-hero-meta">
+              {% if match.vaga %}
+                <span class="tm-msg-hero-badge">
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  {{ match.vaga.titulo }}
+                </span>
+              {% endif %}
+              <span class="tm-msg-hero-date">Match em {{ match.criado_em.strftime('%d/%m/%Y') }}</span>
+            </div>
+          </div>
+          <span class="tm-msg-hero-match-pill">Match!</span>
+        </div>
+
+        {# ── Coluna esquerda: mensagem ── #}
+        <div class="tm-msg-col tm-msg-col--left">
+
+          <p class="tm-ios-section-title">Mensagem para o candidato</p>
+          <div class="tm-msg-compose">
+            <div class="tm-msg-textarea-card">
+              {{ form.mensagem(
+                  class_='tm-msg-textarea',
+                  maxlength='1000',
+                  placeholder='Ex.: Olá! Gostamos do seu perfil para esta vaga. Entre em contato pelo e-mail ou telefone abaixo para combinarmos os próximos passos.'
+              ) }}
+              {% for error in form.mensagem.errors %}
+                <p class="tm-msg-field-error">{{ error }}</p>
+              {% endfor %}
+            </div>
+            <div class="tm-msg-compose-foot">
+              <p class="tm-msg-textarea-hint">Até 1000 caracteres. Seja direto sobre próximos passos, horário de contato e documentos necessários.</p>
+              <div class="tm-msg-actions">
+                <a href="{{ url_for('contratante.matches') }}" class="tm-msg-btn-cancel">Cancelar</a>
+                {{ form.submit(class_='tm-msg-btn-save') }}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {# ── Coluna direita: contatos — card alinhado ao tm-msg-hero #}
+        <div class="tm-msg-col tm-msg-col--right">
+
+          <div class="tm-msg-contact-panel">
+            <p class="tm-ios-section-title tm-msg-contact-section-title">Meios de contato</p>
+            <div class="tm-msg-contact-card">
+              <p class="tm-msg-contact-hint">Selecione ao menos um canal para o candidato falar com você.</p>
+
+            {# Gmail / e-mail #}
+            <div class="tm-msg-contact-row">
+              <div class="tm-msg-contact-info">
+                <span class="tm-msg-contact-icon tm-msg-contact-icon--blue">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </span>
+                <div>
+                  <strong class="tm-msg-contact-label">{{ form.usar_email.label.text }}</strong>
+                  <small class="tm-msg-contact-desc">Mostrar um e-mail clicável para o candidato.</small>
+                </div>
+              </div>
+              <label class="tm-ios-toggle">
+                {{ form.usar_email(class_='tm-ios-toggle-input', data_target='email-contact-field') }}
+                <span class="tm-ios-toggle-track"></span>
+              </label>
+            </div>
+            <div id="email-contact-field" class="tm-msg-contact-expand is-hidden">
+              <div class="tm-msg-contact-input-wrap">
+                <label class="tm-msg-input-label" for="{{ form.contato_email.id }}">Gmail / E-mail</label>
+                {{ form.contato_email(class_='tm-msg-input', placeholder='contato@empresa.com') }}
+              </div>
+              {% for error in form.contato_email.errors %}
+                <p class="tm-msg-field-error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="tm-msg-contact-divider"></div>
+
+            {# Telefone #}
+            <div class="tm-msg-contact-row">
+              <div class="tm-msg-contact-info">
+                <span class="tm-msg-contact-icon tm-msg-contact-icon--green">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.86-.86a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                </span>
+                <div>
+                  <strong class="tm-msg-contact-label">{{ form.usar_telefone.label.text }}</strong>
+                  <small class="tm-msg-contact-desc">Mostrar um telefone direto para o candidato.</small>
+                </div>
+              </div>
+              <label class="tm-ios-toggle">
+                {{ form.usar_telefone(class_='tm-ios-toggle-input', data_target='phone-contact-field') }}
+                <span class="tm-ios-toggle-track"></span>
+              </label>
+            </div>
+            <div id="phone-contact-field" class="tm-msg-contact-expand is-hidden">
+              <div class="tm-msg-contact-input-wrap">
+                <label class="tm-msg-input-label" for="{{ form.contato_telefone.id }}">Telefone</label>
+                {{ form.contato_telefone(class_='tm-msg-input', placeholder='(27) 99999-9999') }}
+              </div>
+              {% for error in form.contato_telefone.errors %}
+                <p class="tm-msg-field-error">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            {% for error in form.usar_email.errors %}
+              <p class="tm-msg-field-error" style="padding: .5rem 1rem 0">{{ error }}</p>
+            {% endfor %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.querySelectorAll('.tm-ios-toggle-input').forEach((toggle) => {
+    const target = document.getElementById(toggle.dataset.target);
+    const sync = () => {
+      if (!target) return;
+      target.classList.toggle('is-hidden', !toggle.checked);
+      if (toggle.checked) {
+        const input = target.querySelector('input');
+        if (input) { input.focus(); }
+      }
+    };
+    toggle.addEventListener('change', sync);
+    sync();
+  });
+</script>
+{% endblock %}

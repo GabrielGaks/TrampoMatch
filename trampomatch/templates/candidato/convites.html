@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+
+{% block title %}Convites — TrampoMatch{% endblock %}
+
+{% block content %}
+{% set avatar_colors = ['#007AFF','#34C759','#FF9500','#AF52DE','#FF3B30','#5AC8FA','#30B0C7','#FF6B35'] %}
+
+<section class="section tm-app-section tm-convites-ios-page">
+  <div class="container">
+
+    {# ── Cabeçalho ── #}
+    <div class="tm-section-header tm-reveal">
+      <div>
+        <span class="tm-eyebrow">Candidato</span>
+        <h1 class="tm-section-title">
+          Convites
+          {% if convites %}
+            <span class="tm-ios-count-badge">{{ convites|length }}</span>
+          {% endif %}
+        </h1>
+        <p class="tm-section-subtitle">Empresas que demonstraram interesse em você para uma vaga específica.</p>
+      </div>
+      <a class="button tm-btn-primary" href="{{ url_for('vagas.listagem') }}">
+        <span class="tm-button-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        Descobrir vagas
+      </a>
+    </div>
+
+    {% if convites %}
+    <div class="tm-ios-list tm-reveal tm-d1">
+      <div class="tm-ios-list-section">
+
+        <div class="tm-ios-list-header">
+          <span class="tm-ios-list-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </span>
+          <span class="tm-ios-list-header-title">Convites recebidos</span>
+          <span class="tm-ios-list-header-count">{{ convites|length }}</span>
+        </div>
+
+        <div class="tm-ios-list-body">
+          {% for item in convites %}
+          {% set convite = item.convite %}
+          {% set vaga = item.vaga %}
+          {% set contratante = item.contratante %}
+          {% set perfil = item.perfil_contratante %}
+          {% set nome_empresa = perfil.nome_empresa if perfil and perfil.nome_empresa else contratante.nome %}
+          {% set color = avatar_colors[loop.index0 % avatar_colors|length] %}
+
+          <div
+            class="tm-ios-row"
+            role="button"
+            tabindex="0"
+            data-target="modal-convite-{{ convite.id }}"
+            aria-label="Ver detalhes do convite de {{ nome_empresa }}"
+          >
+            <div class="tm-ios-row-avatar" style="background:{{ color }}">{{ nome_empresa[0].upper() }}</div>
+            <div class="tm-ios-row-body">
+              <div class="tm-ios-row-name">{{ nome_empresa }}</div>
+              <div class="tm-ios-row-meta">
+                {{ vaga.titulo }}{% if vaga.regiao %} · {{ vaga.regiao }}{% endif %}
+              </div>
+            </div>
+            <div class="tm-ios-row-right">
+              {% if item.compatibilidade is not none %}
+                <span class="tm-ios-match-pill {% if item.compatibilidade >= 70 %}tm-ios-match-pill--match{% endif %}">
+                  {{ item.compatibilidade }}%
+                </span>
+              {% endif %}
+              <span class="tm-ios-chevron" aria-hidden="true">›</span>
+            </div>
+          </div>
+
+          {# ── Modal iOS com detalhes da empresa + vaga ── #}
+          <div class="modal tm-detalhe-modal tm-ios-modal" id="modal-convite-{{ convite.id }}">
+            <div class="modal-background tm-modal-bg"></div>
+            <div class="tm-ios-modal-card">
+              <div class="tm-ios-modal-handle"></div>
+
+              {# Hero empresa #}
+              <div class="tm-ios-modal-hero">
+                <div class="tm-ios-modal-avatar" style="background:{{ color }}; font-size:1.35rem">{{ nome_empresa[0].upper() }}</div>
+                <div class="tm-ios-modal-hero-text">
+                  <h2 class="tm-ios-modal-name">{{ nome_empresa }}</h2>
+                  {% if perfil %}
+                  <p class="tm-ios-modal-submeta">
+                    {{ perfil.tipo_contratante|capitalize if perfil.tipo_contratante }}{% if perfil.regiao %} · {{ perfil.regiao }}{% endif %}
+                  </p>
+                  {% endif %}
+                  {% if item.compatibilidade is not none %}
+                    <span class="tm-ios-match-pill {% if item.compatibilidade >= 70 %}tm-ios-match-pill--match{% endif %}" style="margin-top:.5rem">
+                      {{ item.compatibilidade }}% compatível
+                    </span>
+                  {% endif %}
+                </div>
+                <button class="tm-ios-modal-close tm-modal-fechar" aria-label="Fechar">✕</button>
+              </div>
+
+              <div class="tm-ios-modal-body">
+
+                {# Detalhes da vaga #}
+                <p class="tm-ios-section-title">Vaga oferecida</p>
+                <div class="tm-ios-info-group">
+                  <div class="tm-ios-info-row">
+                    <span class="tm-ios-info-icon tm-ios-info-icon--blue">
+                      <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+                    </span>
+                    <div class="tm-ios-info-text">
+                      <span class="tm-ios-info-label">Título</span>
+                      <strong class="tm-ios-info-value">{{ vaga.titulo }}</strong>
+                    </div>
+                  </div>
+                  <div class="tm-ios-info-row">
+                    <span class="tm-ios-info-icon tm-ios-info-icon--orange">
+                      <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                    </span>
+                    <div class="tm-ios-info-text">
+                      <span class="tm-ios-info-label">Nível</span>
+                      <strong class="tm-ios-info-value">{{ vaga.complexidade_rotulo }}</strong>
+                    </div>
+                  </div>
+                  <div class="tm-ios-info-row">
+                    <span class="tm-ios-info-icon tm-ios-info-icon--green">
+                      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </span>
+                    <div class="tm-ios-info-text">
+                      <span class="tm-ios-info-label">Tipo · Disponibilidade</span>
+                      <strong class="tm-ios-info-value">{{ vaga.tipo_vaga|capitalize }}{% if vaga.disponibilidade %} · {{ vaga.disponibilidade|capitalize }}{% endif %}</strong>
+                    </div>
+                  </div>
+                  {% if vaga.valor_min or vaga.valor_max %}
+                  <div class="tm-ios-info-row">
+                    <span class="tm-ios-info-icon tm-ios-info-icon--green">
+                      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </span>
+                    <div class="tm-ios-info-text">
+                      <span class="tm-ios-info-label">Remuneração</span>
+                      <strong class="tm-ios-info-value">
+                        R$ {{ "%.0f"|format(vaga.valor_min) if vaga.valor_min }}{% if vaga.valor_min and vaga.valor_max %} – {% endif %}{% if vaga.valor_max %}R$ {{ "%.0f"|format(vaga.valor_max) }}{% endif %}
+                      </strong>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+
+                {% set habilidades = vaga.habilidades_lista() %}
+                {% if habilidades %}
+                <p class="tm-ios-section-title">Habilidades desejadas</p>
+                <div class="tm-ios-chips-row">
+                  {% for h in habilidades %}<span class="tm-ios-chip">{{ h|capitalize }}</span>{% endfor %}
+                </div>
+                {% endif %}
+
+                {% if vaga.descricao %}
+                <p class="tm-ios-section-title">Descrição da vaga</p>
+                <div class="tm-ios-prose">{{ vaga.descricao }}</div>
+                {% endif %}
+
+                {# Sobre a empresa #}
+                {% if perfil and (perfil.descricao or perfil.areas_atuacao or perfil.site or perfil.quantidade_funcionarios) %}
+                <div class="tm-convite-company-section">
+                  <p class="tm-ios-section-title">Sobre a empresa</p>
+                  {% if perfil.descricao %}
+                  <div class="tm-ios-prose">{{ perfil.descricao }}</div>
+                  {% endif %}
+                  <div class="tm-ios-info-group">
+                    {% if perfil.areas_atuacao %}
+                    <div class="tm-ios-info-row">
+                      <span class="tm-ios-info-icon tm-ios-info-icon--blue">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                      </span>
+                      <div class="tm-ios-info-text">
+                        <span class="tm-ios-info-label">Áreas de atuação</span>
+                        <strong class="tm-ios-info-value">{{ perfil.areas_atuacao }}</strong>
+                      </div>
+                    </div>
+                    {% endif %}
+                    {% if perfil.quantidade_funcionarios %}
+                    <div class="tm-ios-info-row">
+                      <span class="tm-ios-info-icon tm-ios-info-icon--purple">
+                        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      </span>
+                      <div class="tm-ios-info-text">
+                        <span class="tm-ios-info-label">Tamanho da equipe</span>
+                        <strong class="tm-ios-info-value">{{ perfil.quantidade_funcionarios }} funcionários</strong>
+                      </div>
+                    </div>
+                    {% endif %}
+                    {% if perfil.site %}
+                    <div class="tm-ios-info-row">
+                      <span class="tm-ios-info-icon tm-ios-info-icon--green">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                      </span>
+                      <div class="tm-ios-info-text">
+                        <span class="tm-ios-info-label">Site</span>
+                        <strong class="tm-ios-info-value">{{ perfil.site }}</strong>
+                      </div>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+
+              </div>
+
+              {# Footer com ações #}
+              <div class="tm-ios-modal-footer">
+                <form method="post" action="{{ url_for('candidato.recusar_convite', interesse_id=convite.id) }}" style="flex:1">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="tm-ios-footer-btn tm-ios-footer-btn--danger" type="submit">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    Recusar
+                  </button>
+                </form>
+                <a class="tm-ios-footer-btn" href="{{ url_for('vagas.detalhe', id=vaga.id) }}" style="flex:1; text-align:center; text-decoration:none">
+                  Ver vaga
+                </a>
+                <form method="post" action="{{ url_for('candidato.aceitar_convite', interesse_id=convite.id) }}" style="flex:1">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="tm-ios-footer-btn tm-ios-footer-btn--accept" type="submit">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Aceitar
+                  </button>
+                </form>
+              </div>
+
+            </div>
+          </div>
+
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <div class="columns is-centered mt-3">
+      <div class="column is-two-thirds-desktop is-three-quarters-tablet">
+        <div class="tm-swipe-empty tm-reveal">
+          <h2>Nenhum convite por enquanto</h2>
+          <p>Quando uma empresa demonstrar interesse em você para uma vaga, o convite aparecerá aqui.</p>
+          <a class="button tm-btn-primary mt-4" href="{{ url_for('vagas.listagem') }}">Descobrir vagas</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const DURACAO = 200;
+
+    function fechar(modal) {
+      modal.classList.remove('is-active');
+      modal.classList.add('is-closing');
+      document.documentElement.classList.remove('is-clipped');
+      setTimeout(() => modal.classList.remove('is-closing'), DURACAO);
+    }
+
+    function abrir(modal) {
+      modal.classList.remove('is-closing');
+      modal.classList.add('is-active');
+      document.documentElement.classList.add('is-clipped');
+    }
+
+    document.querySelectorAll('.tm-ios-row[data-target]').forEach(row => {
+      const abrirDetalhes = () => {
+        const modal = document.getElementById(row.dataset.target);
+        if (modal) abrir(modal);
+      };
+      row.addEventListener('click', e => { if (e.target.closest('button, a, form')) return; abrirDetalhes(); });
+      row.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault(); abrirDetalhes(); });
+    });
+
+    document.querySelectorAll('.tm-modal-fechar, .tm-modal-bg').forEach(el => {
+      el.addEventListener('click', () => { const m = el.closest('.modal'); if (m) fechar(m); });
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      document.querySelectorAll('.modal.is-active').forEach(m => fechar(m));
+    });
+  });
+</script>
+{% endblock %}

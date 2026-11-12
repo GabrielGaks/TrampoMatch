@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Escolher Perfil - TrampoMatch{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section tm-google-choice-page">
+  <div class="container tm-narrow">
+    <div class="tm-google-choice-card">
+      <span class="tm-signup-eyebrow">Cadastro com Google</span>
+      <h1 class="tm-section-title">Olá, {{ nome }}!</h1>
+      <p class="tm-section-subtitle">
+        Escolha o tipo de conta para montar seu perfil completo antes de acessar o TrampoMatch.
+      </p>
+
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <fieldset class="field">
+          <legend class="label">Tipo de perfil</legend>
+          <div class="tm-signup-profile-grid">
+            <label class="tm-signup-profile-card" for="tipo_candidato">
+              <input class="tm-signup-radio" type="radio" name="tipo_perfil" id="tipo_candidato" value="candidato" required>
+              <span class="tm-signup-profile-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20 21a8 8 0 0 0-16 0"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <span>
+                <strong>Candidato</strong>
+                <small>Quero encontrar vagas e oportunidades.</small>
+              </span>
+            </label>
+
+            <label class="tm-signup-profile-card" for="tipo_contratante">
+              <input class="tm-signup-radio" type="radio" name="tipo_perfil" id="tipo_contratante" value="contratante" required>
+              <span class="tm-signup-profile-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="7" width="18" height="14" rx="2"/>
+                  <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <path d="M3 13h18"/>
+                </svg>
+              </span>
+              <span>
+                <strong>Contratante</strong>
+                <small>Quero divulgar vagas e contratar talentos.</small>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="button tm-btn-primary is-fullwidth">
+          Continuar
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

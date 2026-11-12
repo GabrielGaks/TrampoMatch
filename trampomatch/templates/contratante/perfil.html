@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% from '_form_helpers.html' import render_field %}
+
+{% block title %}Perfil do Contratante — TrampoMatch{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section">
+  <div class="container tm-narrow">
+    <h1 class="tm-section-title">Perfil do contratante</h1>
+    <form method="post" class="tm-form-card">
+      {{ form.hidden_tag() }}
+
+      <div class="tm-profile-field">
+        {{ form.regiao.label(class="label") }}
+        <div class="tm-location-row">
+          <div class="control tm-location-input">
+            {{ form.regiao(class="input", autocomplete="off", placeholder="Digite sua cidade ou use sua localização") }}
+          </div>
+          <button class="button tm-btn-outline" id="usar-localizacao" type="button">
+            <span class="tm-button-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v3"/><path d="M12 19v3"/>
+                <path d="M2 12h3"/><path d="M19 12h3"/>
+              </svg>
+            </span>
+            Usar localização
+          </button>
+        </div>
+        <p class="help" id="localizacao-status"></p>
+        <div class="tm-autocomplete-list" id="regiao-sugestoes"></div>
+        {% for error in form.regiao.errors %}
+          <p class="help is-danger">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      {{ render_field(form.descricao) }}
+      {{ form.submit(class="button tm-btn-primary is-fullwidth") }}
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const regioes = {{ regioes|tojson }};
+    const coordenadas = {{ coordenadas_regioes|tojson }};
+    const regiaoInput = document.getElementById('regiao');
+    const sugestoes = document.getElementById('regiao-sugestoes');
+    const locBtn = document.getElementById('usar-localizacao');
+    const locStatus = document.getElementById('localizacao-status');
+
+    const normalize = (v) => v.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+    const distance = (a, b) => {
+      const dlat = a.lat - b.lat, dlng = a.lng - b.lng;
+      return Math.sqrt(dlat * dlat + dlng * dlng);
+    };
+
+    const closestRegion = (coords) =>
+      Object.entries(coordenadas)
+        .map(([name, pt]) => ({ name, d: distance({ lat: coords.latitude, lng: coords.longitude }, pt) }))
+        .sort((a, b) => a.d - b.d)[0].name;
+
+    const detectar = () => {
+      if (!navigator.geolocation) return;
+      locStatus.textContent = 'Detectando sua região...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const region = closestRegion(pos.coords);
+          regiaoInput.value = region;
+          locStatus.textContent = `Região detectada: ${region}.`;
+          sugestoes.innerHTML = '';
+        },
+        () => { locStatus.textContent = ''; },
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+      );
+    };
+
+    regiaoInput.addEventListener('input', () => {
+      sugestoes.innerHTML = '';
+      const q = normalize(regiaoInput.value.trim());
+      if (!q) return;
+      regioes.filter((r) => normalize(r).includes(q)).slice(0, 5).forEach((r) => {
+        const btn = document.createElement('button');
+        btn.className = 'tm-pill'; btn.type = 'button'; btn.textContent = r;
+        btn.addEventListener('click', () => { regiaoInput.value = r; sugestoes.innerHTML = ''; });
+        sugestoes.appendChild(btn);
+      });
+    });
+
+    locBtn.addEventListener('click', detectar);
+
+    if (!regiaoInput.value) detectar();
+  });
+</script>
+{% endblock %}

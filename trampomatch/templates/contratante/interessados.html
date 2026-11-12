@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+
+{% block title %}Interessados — TrampoMatch{% endblock %}
+{% block body_class %}tm-discovery-body{% endblock %}
+
+{% block content %}
+<section class="section tm-app-section tm-discovery-page">
+  <div class="tm-discovery-layout tm-discovery-layout--2col">
+
+    <!-- ── DECK PRINCIPAL ──────────────────────────────────────── -->
+    <main class="tm-discovery-main tm-reveal tm-d1">
+
+      <div class="tm-discovery-main-head tm-discovery-main-head--1col">
+        <div>
+          <a class="tm-back-link" href="{{ url_for('contratante.minhas_vagas') }}">‹ Minhas vagas</a>
+          <h1 class="tm-section-title" style="margin-top:0.25rem">Interessados em {{ vaga.titulo }}</h1>
+          <p class="tm-section-subtitle">Deslize para aceitar ou recusar cada candidato.</p>
+          <span class="tm-discovery-count">
+            {{ candidatos|length }} {{ 'candidato pendente' if candidatos|length == 1 else 'candidatos pendentes' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="tm-swipe-shell">
+        <div class="tm-swipe-feedback" data-swipe-feedback aria-hidden="true"></div>
+
+        {% for item in candidatos %}
+          {% set perfil  = item.perfil %}
+          {% set usuario = item.usuario %}
+          {% set skills  = perfil.habilidades_lista() if perfil else [] %}
+          <article
+            class="tm-swipe-card tm-discovery-card {% if loop.first %}is-active{% endif %}"
+            data-swipe-card
+            data-title="{{ usuario.nome|e }}"
+            data-region="{{ (perfil.regiao or '')|e if perfil else '' }}"
+            data-tipo="{{ (perfil.tipo_trabalho or '')|e if perfil else '' }}"
+            data-disponibilidade="{{ (perfil.disponibilidade or '')|e if perfil else '' }}"
+            data-nivel="{{ perfil.nivel_experiencia_rotulo|e if perfil else '' }}"
+            data-skills="{{ skills|tojson|forceescape }}"
+            data-match="{{ item.compatibilidade if item.compatibilidade is not none else '' }}"
+            data-match-result="{{ (item.resultado_match or {})|tojson|forceescape }}"
+            data-experiencia="{{ (perfil.experiencia_resumida or '') if perfil else '' }}"
+            data-interesse="{{ item.interesse.criado_em.strftime('%d/%m/%Y') if item.interesse.criado_em else '' }}"
+            data-curriculo-url="{{ url_for('contratante.baixar_curriculo_candidato', id=usuario.id) if perfil and perfil.curriculo_arquivo else '' }}"
+            data-curriculo-view-url="{{ url_for('contratante.visualizar_curriculo_candidato', id=usuario.id) if perfil and perfil.curriculo_arquivo else '' }}"
+            data-curriculo-nome="{{ (perfil.curriculo_nome_original or '') if perfil else '' }}"
+          >
+            <div class="tm-swipe-stamp tm-swipe-stamp-like">Tenho interesse</div>
+            <div class="tm-swipe-stamp tm-swipe-stamp-skip">Não tenho interesse</div>
+
+            <div class="tm-swipe-card-inner">
+              <div class="tm-swipe-card-top">
+                {% if item.compatibilidade is not none %}
+                  <span class="tm-swipe-match-badge">{{ item.compatibilidade }}% Match</span>
+                {% else %}
+                  <span></span>
+                {% endif %}
+                <span class="tm-swipe-status-badge">
+                  <span class="tm-swipe-status-dot"></span>
+                  Já curtiu a vaga
+                </span>
+              </div>
+
+              <div class="tm-swipe-card-hero">
+                <div class="tm-swipe-card-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div class="tm-swipe-card-hero-text">
+                  <h2 class="tm-swipe-title">{{ usuario.nome }}</h2>
+                  <div class="tm-swipe-meta">
+                    <span>{{ perfil.regiao if perfil else '—' }}</span>
+                    <span class="tm-swipe-meta-sep">•</span>
+                    <span>{{ perfil.tipo_trabalho|capitalize if perfil else '—' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="tm-card-desc tm-swipe-desc">
+                {{ perfil.experiencia_resumida if perfil and perfil.experiencia_resumida else 'Candidato interessado nesta vaga.' }}
+              </p>
+
+              <div class="tm-swipe-info-grid">
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--orange" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Experiência</span>
+                  <strong class="tm-swipe-info-value">{{ perfil.nivel_experiencia_rotulo if perfil else '—' }}</strong>
+                </div>
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--green" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Disponibilidade</span>
+                  <strong class="tm-swipe-info-value">{{ perfil.disponibilidade|capitalize if perfil else '—' }}</strong>
+                </div>
+                <div class="tm-swipe-info-box">
+                  <span class="tm-swipe-info-icon tm-swipe-info-icon--purple" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><rect width="18" height="13" x="3" y="7" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+                  </span>
+                  <span class="tm-swipe-info-label">Interesse em</span>
+                  <strong class="tm-swipe-info-value">{{ item.interesse.criado_em.strftime('%d/%m/%Y') if item.interesse.criado_em else '—' }}</strong>
+                </div>
+              </div>
+
+              {% if skills %}
+                <div class="tm-swipe-skills">
+                  <span class="tm-swipe-skills-label">Habilidades</span>
+                  <div class="tm-swipe-chips">
+                    {% for skill in skills[:4] %}
+                      <span class="tm-swipe-chip">{{ skill|capitalize }}</span>
+                    {% endfor %}
+                    {% if skills|length > 4 %}
+                      <span class="tm-swipe-chip tm-swipe-chip--more">+{{ skills|length - 4 }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+
+              <div class="tm-swipe-actions">
+                <form method="post"
+                  action="{{ url_for('contratante.recusar_interessado', id=vaga.id, candidato_id=usuario.id) }}"
+                  data-swipe-action="skip">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="button tm-swipe-btn tm-swipe-btn-skip" type="submit" aria-label="Não tenho interesse">×</button>
+                </form>
+
+                <button class="button tm-swipe-btn tm-swipe-btn-detail" type="button" data-focus-details>
+                  <span class="icon is-small" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  </span>
+                  <span>Ver detalhes</span>
+                </button>
+
+                <form method="post"
+                  action="{{ url_for('contratante.aceitar_interessado', id=vaga.id, candidato_id=usuario.id) }}"
+                  data-swipe-action="like">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="button tm-swipe-btn tm-swipe-btn-like" type="submit" aria-label="Tenho interesse">
+                    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l7.78-8.84a5.5 5.5 0 0 0 1.06-7.78z"/></svg>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </article>
+        {% else %}
+          <div class="tm-swipe-empty" data-swipe-empty>
+            <h2>Nenhum candidato pendente</h2>
+            <p>Quando candidatos demonstrarem interesse nesta vaga, eles aparecerão aqui.</p>
+          </div>
+        {% endfor %}
+
+        {% if candidatos %}
+          <div class="tm-swipe-empty is-hidden" data-swipe-empty>
+            <h2>Você avaliou todos os candidatos</h2>
+            <p>Novos interessados aparecerão aqui assim que demonstrarem interesse na vaga.</p>
+          </div>
+        {% endif %}
+      </div>
+
+    </main>
+
+    <!-- ── PAINEL DE DETALHES ──────────────────────────────────── -->
+    <aside class="tm-discovery-details" data-details-panel tabindex="-1">
+      <div class="tm-details-card">
+
+        <div class="tm-details-head">
+          <h2>Detalhes do candidato</h2>
+          <span class="tm-details-close" aria-hidden="true">×</span>
+        </div>
+
+        <div class="tm-details-empty {% if candidatos %}is-hidden{% endif %}" data-details-empty>
+          <h3>Nenhum candidato selecionado</h3>
+          <p>Avalie os candidatos ao lado para ver os detalhes aqui.</p>
+        </div>
+
+        <div class="tm-details-content {% if not candidatos %}is-hidden{% endif %}" data-details-content>
+
+          <div class="tm-details-hero">
+            <div class="tm-details-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="tm-details-title-group">
+              <div class="tm-details-title-row">
+                <h3 data-details-title></h3>
+                <span class="tm-swipe-match-badge" data-details-match></span>
+              </div>
+              <div class="tm-swipe-meta tm-details-meta">
+                <span data-details-region></span>
+                <span data-details-tipo></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tm-details-section">
+            <h4>Experiência resumida</h4>
+            <p data-details-experiencia></p>
+          </div>
+
+          <div class="tm-details-info-list">
+            <div class="tm-details-info-box">
+              <span class="tm-swipe-info-icon tm-swipe-info-icon--orange" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+              </span>
+              <div>
+                <span>Nível de experiência</span>
+                <strong data-details-nivel></strong>
+              </div>
+            </div>
+            <div class="tm-details-info-box">
+              <span class="tm-swipe-info-icon tm-swipe-info-icon--green" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+              <div>
+                <span>Disponibilidade</span>
+                <strong data-details-disponibilidade></strong>
+              </div>
+            </div>
+            <div class="tm-details-info-box">
+              <span class="tm-swipe-info-icon tm-swipe-info-icon--purple" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect width="18" height="13" x="3" y="7" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+              </span>
+              <div>
+                <span>Data do interesse</span>
+                <strong data-details-interesse></strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="tm-details-section">
+            <h4>Habilidades</h4>
+            <div class="tm-swipe-chips" data-details-skills></div>
+          </div>
+
+          <div class="tm-details-section">
+            <h4>Currículo</h4>
+            <button class="button tm-btn-outline tm-cv-link" type="button" data-details-curriculo>Visualizar currículo</button>
+            <p class="tm-cv-missing" data-details-curriculo-empty>Currículo não enviado.</p>
+          </div>
+
+          <div class="tm-details-match-summary" data-details-summary-wrap>
+            <strong>Por que esse match?</strong>
+            <p data-details-summary></p>
+          </div>
+
+          <div class="tm-details-interest">
+            <h4>Tem interesse neste candidato?</h4>
+            <div class="tm-details-actions">
+              <button class="button tm-details-skip" type="button" data-panel-action="skip">Não tenho interesse</button>
+              <button class="button tm-btn-primary" type="button" data-panel-action="like">Tenho interesse</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </aside>
+
+    <div class="modal tm-detalhe-modal tm-cv-viewer-modal" id="modal-curriculo-visualizar">
+      <div class="modal-background tm-modal-bg"></div>
+      <div class="modal-card tm-cv-viewer-card">
+        <header class="modal-card-head tm-modal-head">
+          <div>
+            <p class="tm-modal-titulo" data-cv-viewer-title>Currículo</p>
+            <div class="tm-card-meta mt-1"><span>Pré-visualização do currículo do candidato</span></div>
+          </div>
+          <button class="delete is-medium tm-modal-fechar" aria-label="Fechar"></button>
+        </header>
+        <section class="modal-card-body tm-cv-viewer-body">
+          <iframe title="Visualização do currículo" data-cv-viewer-frame></iframe>
+          <div class="tm-cv-viewer-fallback" data-cv-viewer-fallback>
+            <strong>Pré-visualização indisponível para este formato.</strong>
+            <p>Baixe o currículo para abrir arquivos DOC ou DOCX.</p>
+          </div>
+        </section>
+        <footer class="modal-card-foot tm-modal-foot">
+          <a class="button tm-btn-outline" href="#" data-cv-viewer-download>Baixar currículo</a>
+          <button class="button tm-mv-btn-fechar tm-modal-fechar">Fechar</button>
+        </footer>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cards        = Array.from(document.querySelectorAll('[data-swipe-card]'));
+    const emptyState   = document.querySelector('[data-swipe-empty]');
+    const swipeFeedback = document.querySelector('[data-swipe-feedback]');
+    const detailsPanel  = document.querySelector('[data-details-panel]');
+    const detailsContent = document.querySelector('[data-details-content]');
+    const detailsEmpty  = document.querySelector('[data-details-empty]');
+    const cvViewerModal = document.getElementById('modal-curriculo-visualizar');
+    const totalCards = cards.length;
+    let activeIndex = 0;
+    let startX = 0, currentX = 0, dragging = false, animating = false;
+    const threshold = 110;
+
+    const parseJson = (v, fb) => { try { return v ? JSON.parse(v) : fb; } catch { return fb; } };
+    const setText   = (sel, val) => { const n = detailsPanel?.querySelector(sel); if (n) n.textContent = val || ''; };
+
+    const updateDetailsPanel = (card) => {
+      if (!detailsPanel) return;
+      if (!card) {
+        detailsContent?.classList.add('is-hidden');
+        detailsEmpty?.classList.remove('is-hidden');
+        return;
+      }
+      detailsContent?.classList.remove('is-hidden');
+      detailsEmpty?.classList.add('is-hidden');
+
+      setText('[data-details-title]',         card.dataset.title);
+      setText('[data-details-region]',        card.dataset.region);
+      setText('[data-details-tipo]',          card.dataset.tipo);
+      setText('[data-details-nivel]',         card.dataset.nivel);
+      setText('[data-details-disponibilidade]', card.dataset.disponibilidade);
+      setText('[data-details-experiencia]',   card.dataset.experiencia || 'Não informado.');
+      setText('[data-details-interesse]',     card.dataset.interesse   || '—');
+
+      const matchEl = detailsPanel.querySelector('[data-details-match]');
+      if (matchEl) {
+        if (card.dataset.match) { matchEl.textContent = `${card.dataset.match}% Match`; matchEl.style.display = ''; }
+        else matchEl.style.display = 'none';
+      }
+
+      const skills = parseJson(card.dataset.skills, []);
+      const skillsBox = detailsPanel.querySelector('[data-details-skills]');
+      if (skillsBox) {
+        skillsBox.innerHTML = '';
+        skills.forEach((s) => {
+          const c = document.createElement('span');
+          c.className = 'tm-swipe-chip';
+          c.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+          skillsBox.appendChild(c);
+        });
+      }
+
+      const mr = parseJson(card.dataset.matchResult, {});
+      const sw = detailsPanel.querySelector('[data-details-summary-wrap]');
+      if (sw) {
+        if (mr.resumo) { setText('[data-details-summary]', mr.resumo); sw.style.display = ''; }
+        else sw.style.display = 'none';
+      }
+
+      const cvLink = detailsPanel.querySelector('[data-details-curriculo]');
+      const cvEmpty = detailsPanel.querySelector('[data-details-curriculo-empty]');
+      if (cvLink && cvEmpty) {
+        if (card.dataset.curriculoUrl) {
+          cvLink.textContent = card.dataset.curriculoNome ? `Ver currículo (${card.dataset.curriculoNome})` : 'Ver currículo';
+          cvLink.dataset.cvName = card.dataset.curriculoNome || 'Currículo';
+          cvLink.dataset.cvViewUrl = card.dataset.curriculoViewUrl || card.dataset.curriculoUrl;
+          cvLink.dataset.cvDownloadUrl = card.dataset.curriculoUrl;
+          cvLink.style.display = '';
+          cvEmpty.style.display = 'none';
+        } else {
+          cvLink.style.display = 'none';
+          cvEmpty.style.display = '';
+        }
+      }
+    };
+
+    const openCvViewer = (button) => {
+      if (!cvViewerModal) return;
+      const frame = cvViewerModal.querySelector('[data-cv-viewer-frame]');
+      const fallback = cvViewerModal.querySelector('[data-cv-viewer-fallback]');
+      const title = cvViewerModal.querySelector('[data-cv-viewer-title]');
+      const download = cvViewerModal.querySelector('[data-cv-viewer-download]');
+      const name = button.dataset.cvName || 'Currículo';
+      const viewUrl = button.dataset.cvViewUrl;
+      const downloadUrl = button.dataset.cvDownloadUrl || viewUrl;
+      const canPreview = name.toLowerCase().endsWith('.pdf');
+
+      if (title) title.textContent = name;
+      if (download) download.href = downloadUrl;
+      if (frame) {
+        frame.src = canPreview ? viewUrl : '';
+        frame.style.display = canPreview ? '' : 'none';
+      }
+      if (fallback) fallback.style.display = canPreview ? 'none' : '';
+      cvViewerModal.classList.remove('is-closing');
+      cvViewerModal.classList.add('is-active');
+      document.documentElement.classList.add('is-clipped');
+    };
+
+    const setSwipeFeedback = (dir) => {
+      if (!swipeFeedback) return;
+      swipeFeedback.classList.remove('is-visible', 'is-like', 'is-skip');
+      if (!dir) return;
+      swipeFeedback.classList.add('is-visible', dir === 'like' ? 'is-like' : 'is-skip');
+    };
+
+    const updateStack = () => {
+      setSwipeFeedback(null);
+      cards.forEach((c, i) => {
+        c.classList.toggle('is-active', i === activeIndex);
+        c.classList.toggle('is-next',   i === activeIndex + 1);
+      });
+      updateDetailsPanel(cards[activeIndex] || null);
+      if (activeIndex >= cards.length && emptyState) emptyState.classList.remove('is-hidden');
+    };
+
+    const setCardPosition = (card, dx) => {
+      card.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
+      card.classList.toggle('is-liking',  dx > 35);
+      card.classList.toggle('is-skipping', dx < -35);
+      setSwipeFeedback(dx > 35 ? 'like' : dx < -35 ? 'skip' : null);
+    };
+
+    const resetCard = (card) => {
+      card.style.transform = '';
+      card.classList.remove('is-dragging', 'is-liking', 'is-skipping', 'is-flying-left', 'is-flying-right');
+      setSwipeFeedback(null);
+    };
+
+    const persistAction = async (form) => {
+      const r = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!r.ok) throw new Error('A ação não pôde ser registrada.');
+      return r.json();
+    };
+
+    const finishSwipe = async (card, direction) => {
+      if (animating) return;
+      const form = card.querySelector(`[data-swipe-action="${direction}"]`);
+      if (!form) return;
+      animating = true;
+      card.classList.add(direction === 'like' ? 'is-flying-right' : 'is-flying-left');
+      card.classList.toggle('is-liking',  direction === 'like');
+      card.classList.toggle('is-skipping', direction === 'skip');
+      setSwipeFeedback(direction);
+      try {
+        const data = await persistAction(form);
+        window.setTimeout(() => {
+          card.classList.remove('is-active', 'is-next');
+          activeIndex += 1; currentX = 0; animating = false;
+          setSwipeFeedback(null); updateStack();
+          if (data.match) {
+            const msg = document.createElement('div');
+            msg.className = 'tm-match-toast';
+            msg.textContent = '🎉 É um match!';
+            document.body.appendChild(msg);
+            window.setTimeout(() => msg.remove(), 3000);
+          }
+        }, 230);
+      } catch (err) {
+        window.setTimeout(() => { resetCard(card); animating = false; setSwipeFeedback(null); alert(err.message); }, 180);
+      }
+    };
+
+    cards.forEach((card) => {
+      card.querySelectorAll('[data-swipe-action]').forEach((form) => {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (!card.classList.contains('is-active')) return;
+          finishSwipe(card, form.dataset.swipeAction);
+        });
+      });
+
+      card.querySelector('[data-focus-details]')?.addEventListener('click', () => {
+        updateDetailsPanel(card);
+        detailsPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        detailsPanel?.focus({ preventScroll: true });
+      });
+
+      card.addEventListener('pointerdown', (e) => {
+        if (!card.classList.contains('is-active') || animating || e.target.closest('button, a, form')) return;
+        dragging = true; startX = e.clientX;
+        card.setPointerCapture(e.pointerId);
+        card.classList.add('is-dragging');
+      });
+      card.addEventListener('pointermove', (e) => {
+        if (!dragging || !card.classList.contains('is-active')) return;
+        currentX = e.clientX - startX;
+        setCardPosition(card, currentX);
+      });
+      card.addEventListener('pointerup', () => {
+        if (!dragging || !card.classList.contains('is-active')) return;
+        dragging = false; card.classList.remove('is-dragging');
+        if (currentX >= threshold)  { finishSwipe(card, 'like'); return; }
+        if (currentX <= -threshold) { finishSwipe(card, 'skip'); return; }
+        currentX = 0; resetCard(card);
+      });
+      card.addEventListener('pointercancel', () => {
+        dragging = false; currentX = 0; resetCard(card); setSwipeFeedback(null);
+      });
+    });
+
+    document.querySelectorAll('[data-panel-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ac = cards[activeIndex]; if (!ac) return;
+        const f = ac.querySelector(`[data-swipe-action="${btn.dataset.panelAction}"]`);
+        if (f) finishSwipe(ac, f.dataset.swipeAction);
+      });
+    });
+
+    document.querySelector('[data-details-curriculo]')?.addEventListener('click', (event) => {
+      openCvViewer(event.currentTarget);
+    });
+
+    document.querySelectorAll('.tm-modal-fechar, .tm-modal-bg').forEach((el) => {
+      el.addEventListener('click', () => {
+        const modal = el.closest('.modal');
+        if (!modal) return;
+        modal.classList.remove('is-active');
+        modal.classList.add('is-closing');
+        document.documentElement.classList.remove('is-clipped');
+        setTimeout(() => modal.classList.remove('is-closing'), 180);
+      });
+    });
+
+    updateStack();
+  });
+</script>
+{% endblock %}
